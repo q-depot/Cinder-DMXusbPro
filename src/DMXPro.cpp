@@ -33,8 +33,6 @@ mDMXPacket(NULL)
 	
 	initSerial(serialDevicePath);
 	
-	mHasNewValues = true;												// send zeros on start up
-	
 	// start thread to send data at the specific DMX_FRAME_RATE 
 	if (mIsConnected)
 		thread sendDMXDataThread( &DMXPro::sendDMXData, this);
@@ -42,18 +40,9 @@ mDMXPacket(NULL)
 
 
 void DMXPro::sendDMXData() {
-	
-	boost::unique_lock<boost::mutex> dataLock(mDMXDataMutex);			// get DMX packet UNIQUE lock 
-	dataLock.unlock();
-	
 	while(true) {
-		if(mHasNewValues) {
-			dataLock.lock();											// lock data
-			sendPacket();												// send packet
-			mHasNewValues = false;
-			dataLock.unlock();											// unlock data
-			boost::this_thread::sleep(boost::posix_time::milliseconds(mThreadSleepFor));
-		}
+		sendPacket();												// send packet
+		boost::this_thread::sleep(boost::posix_time::milliseconds(mThreadSleepFor));
 	}
 }
 
@@ -83,22 +72,16 @@ Serial::Device DMXPro::findDeviceByPathContains( const string &searchString) {
 
 
 void DMXPro::sendPacket(){
-	mSerial.writeBytes(mDMXPacket, mDMXPacketSize);
+	boost::unique_lock<boost::mutex> dataLock(mDMXDataMutex);			// get DMX packet UNIQUE lock 
+	mSerial.writeBytes(mDMXPacket, mDMXPacketSize);						// send data
+	dataLock.unlock();													// unlock data
 }
 
 
-void DMXPro::sendValue(int value, int channel, bool force) {
-	
+void DMXPro::setValue(int value, int channel) {
 	value = math<int>::clamp(value, 0, 255);
-	
-	mHasNewValues = force;
-	
-	if( mDMXPacket[4+channel] == value )
-		return;
-	
 	boost::unique_lock<boost::mutex> dataLock(mDMXDataMutex);			// get DMX packet UNIQUE lock 
 	mDMXPacket[4+channel] = value;										// update value
-	mHasNewValues = true;
 	dataLock.unlock();													// unlock mutex
 }
 

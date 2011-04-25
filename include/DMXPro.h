@@ -12,7 +12,7 @@
 #define DMX_PRO_END_MSG			0xE7		// End of message delimiter
 #define DMX_PRO_LABEL			6			// Output Only Send DMX Packet Request
 #define	BAUD_RATE				57600		// virtual COM doesn't control the usb, this is just a dummy value
-#define DMX_FRAME_RATE			40			// dmx send frame rate
+#define DMX_FRAME_RATE			38			// dmx send frame rate
 
 
 
@@ -34,15 +34,15 @@ public:
 			ci::app::console() << "Device: " << deviceIt->getPath() << std::endl;
 		}
 	};
-	
-	void    sendValue(int value, int channel, bool force = false);
 
 	void	sendZeros();
 
 	int		getValue(int channel);
 	
 	bool	isConnected() { return mIsConnected; };
-
+	
+	void	setValue(int value, int channel);
+	
 	
 private:
 	void			sendPacket();
