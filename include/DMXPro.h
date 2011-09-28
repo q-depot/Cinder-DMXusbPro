@@ -6,7 +6,7 @@
 #include <iostream>
 #include "cinder/Serial.h"
 #include "cinder/Thread.h"
-
+#include "Logger.h"
 
 #define DMX_PRO_START_MSG		0x7E		// Start of message delimiter
 #define DMX_PRO_END_MSG			0xE7		// End of message delimiter
@@ -24,39 +24,41 @@ public:
 
 	~DMXPro() {};
 
-	void initSerial(const std::string devicePath);
+	void init(bool initWithZeros = true);
 
 	ci::Serial::Device findDeviceByPathContains( const std::string &searchString);
-		
+
 	static void listDevices() {
 		const std::vector<ci::Serial::Device> &devices( ci::Serial::getDevices(true) );
 		for( std::vector<ci::Serial::Device>::const_iterator deviceIt = devices.begin(); deviceIt != devices.end(); ++deviceIt ) {
-			ci::app::console() << "Device: " << deviceIt->getPath() << std::endl;
+			Logger::log("DMX usb pro > List serial devices: " + deviceIt->getPath() );
 		}
 	};
 
 	void	sendZeros();
-
-	int		getValue(int channel);
 	
-	bool	isConnected() { return mIsConnected; };
+	bool	isConnected() { return mSerial != NULL; };
 	
 	void	setValue(int value, int channel);
 	
+	void	reconnect();
+	
+	void	shutdown(bool send_zeros = true);
+	
 	
 private:
-	void			sendPacket();
+	
+	void initDMX();
+	void initSerial(bool initWithZeros);
 
 	void			sendDMXData();
 	
 	int				mChannels;				// number of channels in the packet
 	int				mDMXPacketSize;			// DMX packet size == mChannel + 5
 	unsigned char	*mDMXPacket;			// DMX packet, it contains bytes
-	ci::Serial		mSerial;				// serial interface
-	bool			mIsConnected;			
+	ci::Serial		*mSerial;				// serial interface
 	int				mThreadSleepFor;		// sleep for N ms, this is based on the FRAME_RATE
-	bool			mHasNewValues;			// only send out data when any value has changed
 	boost::mutex	mDMXDataMutex;			// mutex unique lock
-	
+	std::string		mSerialDevicePath;		// usb serial device path
 };
 
