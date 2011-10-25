@@ -137,6 +137,7 @@ void DMXPro::setValue(int value, int channel) {
 	boost::unique_lock<boost::mutex> dataLock(mDMXDataMutex);			// get DMX packet UNIQUE lock 
 	mDMXPacket[4+channel] = value;										// update value
 	dataLock.unlock();													// unlock mutex
+	//console() << "DMX " << value << endl;
 }
 
 
