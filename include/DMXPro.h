@@ -1,43 +1,47 @@
 
+#ifndef DMX_USB_PRO
+#define DMX_USB_PRO
 
 #pragma once
 
-#include "cinder/app/AppBasic.h"
-#include <iostream>
-#include "cinder/Serial.h"
 #include "cinder/Thread.h"
-#include "Logger.h"
-
-#define DMX_PRO_START_MSG		0x7E		// Start of message delimiter
-#define DMX_PRO_END_MSG			0xE7		// End of message delimiter
-#define DMX_PRO_LABEL			6			// Output Only Send DMX Packet Request
-#define	BAUD_RATE				57600		// virtual COM doesn't control the usb, this is just a dummy value
-#define DMX_FRAME_RATE			38			// dmx send frame rate
+#include "cinder/Serial.h"
 
 
+#define DMXPRO_START_MSG		0x7E		// Start of message delimiter
+#define DMXPRO_END_MSG			0xE7		// End of message delimiter
+#define DMXPRO_SEND_LABEL		6			// Output Only Send DMX Packet Request
+#define DMXPRO_BAUD_RATE		57600		// virtual COM doesn't control the usb, this is just a dummy value
+#define DMXPRO_FRAME_RATE		35			// dmx send frame rate
+#define DMXPRO_DATA_SIZE       	513         // include first byte 0x00, what's that?
+#define DMXPRO_PACKET_SIZE      518         // data + 4 bytes(DMXPRO_START_MSG, DMXPRO_SEND_LABEL, DATA_SIZE_LSB, DATA_SIZE_MSB) at the beginning and 1 byte(DMXPRO_END_MSG) at the end
+
+//////////////////////////////////////////////////////////
+// LAST 4 dmx channels seem not to be working, 508-511 !!!
+//////////////////////////////////////////////////////////
 
 class DMXPro{
 
 public:
+    
+    DMXPro( const std::string &serialDevicePath );
 
-	DMXPro(std::string serialDevicePath, int channels_N);
-
-	~DMXPro() {};
+	~DMXPro();
 
 	void init(bool initWithZeros = true);
 
 	ci::Serial::Device findDeviceByPathContains( const std::string &searchString);
 
-	static void listDevices() {
+	static void listDevices() 
+    {
 		const std::vector<ci::Serial::Device> &devices( ci::Serial::getDevices(true) );
-		for( std::vector<ci::Serial::Device>::const_iterator deviceIt = devices.begin(); deviceIt != devices.end(); ++deviceIt ) {
-			Logger::log("DMX usb pro > List serial devices: " + deviceIt->getPath() );
-		}
-	};
+		for( std::vector<ci::Serial::Device>::const_iterator deviceIt = devices.begin(); deviceIt != devices.end(); ++deviceIt ) 
+            ci::app::console() << "DMX usb pro > List serial devices: " + deviceIt->getPath() << std::endl;
+	}
 
-	void	sendZeros();
+	void	setZeros();
 	
-	bool	isConnected() { return mSerial != NULL; };
+	bool	isConnected() { return mSerial != NULL; }
 	
 	void	setValue(int value, int channel);
 	
@@ -49,16 +53,26 @@ public:
 private:
 	
 	void initDMX();
+    
 	void initSerial(bool initWithZeros);
 
 	void			sendDMXData();
-	
-	int				mChannels;				// number of channels in the packet
-	int				mDMXPacketSize;			// DMX packet size == mChannel + 5
+
+private:
+    
 	unsigned char	*mDMXPacket;			// DMX packet, it contains bytes
 	ci::Serial		*mSerial;				// serial interface
 	int				mThreadSleepFor;		// sleep for N ms, this is based on the FRAME_RATE
 	boost::mutex	mDMXDataMutex;			// mutex unique lock
 	std::string		mSerialDevicePath;		// usb serial device path
+    
+    
+private:
+    // disallow
+    DMXPro(const DMXPro&);
+    DMXPro& operator=(const DMXPro&);
+    
 };
 
+
+#endif
