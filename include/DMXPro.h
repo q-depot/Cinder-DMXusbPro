@@ -20,12 +20,18 @@
 // LAST 4 dmx channels seem not to be working, 508-511 !!!
 //////////////////////////////////////////////////////////
 
+class DMXPro;
+typedef std::shared_ptr<DMXPro> DMXProRef;
+
 class DMXPro{
 
 public:
+  
+    static DMXProRef create( const std::string &serialDevicePath )
+    {
+        return DMXProRef( new DMXPro( serialDevicePath ) );
+    }
     
-    DMXPro( const std::string &serialDevicePath );
-
 	~DMXPro();
 
 	void init(bool initWithZeros = true);
@@ -51,7 +57,9 @@ public:
 	
 	
 private:
-	
+    
+    DMXPro( const std::string &serialDevicePath );
+
 	void initDMX();
     
 	void initSerial(bool initWithZeros);
