@@ -63,8 +63,10 @@ private:
 	unsigned char	*mDMXPacket;			// DMX packet, it contains bytes
 	ci::Serial		*mSerial;				// serial interface
 	int				mThreadSleepFor;		// sleep for N ms, this is based on the FRAME_RATE
-	boost::mutex	mDMXDataMutex;			// mutex unique lock
+	std::mutex      mDMXDataMutex;			// mutex unique lock
 	std::string		mSerialDevicePath;		// usb serial device path
+    std::thread     mSendDataThread;
+    bool            mRunSendDataThread;
     
     
 private:

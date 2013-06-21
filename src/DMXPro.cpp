@@ -26,12 +26,17 @@ DMXPro::~DMXPro()
     
     ci::sleep(50);	
     
+    mRunSendDataThread = false;
+    if ( mSendDataThread.joinable() )
+        mSendDataThread.join();
+    
     if ( mSerial )
     {
         mSerial->flush();
         delete mSerial;
         mSerial = NULL;
     }
+    
     
     delete []mDMXPacket;
     
@@ -91,7 +96,8 @@ void DMXPro::initSerial(bool initWithZeros)
         console() << "DMXPro > There was an error initializing the usb DMX device" << endl;
 		mSerial = NULL;
 	}
-	thread sendDMXDataThread( &DMXPro::sendDMXData, this);				// start thread to send data at the specific DMX_FRAME_RATE 
+    
+    mSendDataThread = std::thread( &DMXPro::sendDMXData, this );
 }
 
 
@@ -117,12 +123,14 @@ void DMXPro::initDMX()
 
 void DMXPro::sendDMXData() 
 {
-	while(mSerial) 
+    mRunSendDataThread = true;
+    
+	while( mRunSendDataThread )
     {
-		boost::unique_lock<boost::mutex> dataLock(mDMXDataMutex);			// get DMX packet UNIQUE lock 
-		mSerial->writeBytes(mDMXPacket, DMXPRO_PACKET_SIZE);                // send data        
-		dataLock.unlock();													// unlock data
-		ci::sleep( mThreadSleepFor );
+		std::unique_lock<std::mutex> dataLock(mDMXDataMutex);                           // get DMX packet UNIQUE lock
+		mSerial->writeBytes( mDMXPacket, DMXPRO_PACKET_SIZE );                          // send data
+		dataLock.unlock();                                                              // unlock data
+        std::this_thread::sleep_for( std::chrono::milliseconds( mThreadSleepFor ) );
 	}
     console() << "DMXPro > sendDMXData() thread exited!" << endl;
 }
@@ -148,7 +156,7 @@ void DMXPro::setValue(int value, int channel)
 	}
     // DMX channels start form byte [5] and end at byte [DMXPRO_PACKET_SIZE-2], last byte is EOT(0xE7)        
 	value = math<int>::clamp(value, 0, 255);
-	boost::unique_lock<boost::mutex> dataLock(mDMXDataMutex);			// get DMX packet UNIQUE lock 
+	std::unique_lock<std::mutex> dataLock(mDMXDataMutex);			// get DMX packet UNIQUE lock
 	mDMXPacket[ 5 + channel ] = value;                                  // update value
 	dataLock.unlock();													// unlock mutex
 }
