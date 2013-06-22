@@ -125,7 +125,7 @@ void DMXPro::sendDMXData()
 {
     mRunSendDataThread = true;
     
-	while( mRunSendDataThread )
+	while( mSerial && mRunSendDataThread )
     {
 		std::unique_lock<std::mutex> dataLock(mDMXDataMutex);                           // get DMX packet UNIQUE lock
 		mSerial->writeBytes( mDMXPacket, DMXPRO_PACKET_SIZE );                          // send data
