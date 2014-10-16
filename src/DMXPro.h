@@ -68,6 +68,7 @@ public:
 	
 	void	shutdown(bool send_zeros = true);
 	
+    std::string  getDeviceName() { return mSerialDevicePath; }
 	
 private:
     
