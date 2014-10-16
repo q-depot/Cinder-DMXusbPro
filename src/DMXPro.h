@@ -38,11 +38,24 @@ public:
 
 	ci::Serial::Device findDeviceByPathContains( const std::string &searchString);
 
-	static void listDevices() 
+	static void listDevices()
     {
 		const std::vector<ci::Serial::Device> &devices( ci::Serial::getDevices(true) );
-		for( std::vector<ci::Serial::Device>::const_iterator deviceIt = devices.begin(); deviceIt != devices.end(); ++deviceIt ) 
+		
+        for( std::vector<ci::Serial::Device>::const_iterator deviceIt = devices.begin(); deviceIt != devices.end(); ++deviceIt )
             ci::app::console() << "DMX usb pro > List serial devices: " + deviceIt->getPath() << std::endl;
+	}
+    
+    static std::vector<std::string> getDevicesList()
+    {
+        std::vector<std::string> devicesList;
+
+		const std::vector<ci::Serial::Device> &devices( ci::Serial::getDevices(true) );
+		
+        for( std::vector<ci::Serial::Device>::const_iterator deviceIt = devices.begin(); deviceIt != devices.end(); ++deviceIt )
+            devicesList.push_back( deviceIt->getPath() );
+        
+        return devicesList;
 	}
 
 	void	setZeros();

@@ -88,7 +88,7 @@ void DMXPro::initSerial(bool initWithZeros)
 	try 
     {
 		Serial::Device dev = findDeviceByPathContains(mSerialDevicePath);
-		mSerial = new Serial(dev, DMXPRO_BAUD_RATE);
+		mSerial = new Serial( dev, DMXPRO_BAUD_RATE );
         console() << "DMXPro > Connected to usb DMX interface: " << dev.getName() << endl;
 	}
 	catch( ... ) 
