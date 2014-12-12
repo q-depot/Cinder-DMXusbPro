@@ -2,7 +2,8 @@
  *  DMXPro.cpp
  *
  *  Created by Andrea Cuius
- *  Nocte Studio Ltd. Copyright 2014 . All rights reserved.
+ *  The MIT License (MIT)
+ *  Copyright (c) 2014 Nocte Studio Ltd.
  *
  *  www.nocte.co.uk
  *
@@ -140,6 +141,7 @@ void DMXPro::sendDMXData()
 		dataLock.unlock();                                                              // unlock data
         std::this_thread::sleep_for( std::chrono::milliseconds( mThreadSleepFor ) );
 	}
+    
     console() << "DMXPro > sendDMXData() thread exited!" << endl;
 }
 
