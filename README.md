@@ -56,7 +56,7 @@ void BasicSampleApp::update()
 ### License
 The MIT License (MIT)
 
-Copyright (c) 2014 Nocte Studio Ltd.
+Copyright (c) 2014 Nocte Studio Ltd. - [www.nocte.co.uk](http://www.nocte.co.uk)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
