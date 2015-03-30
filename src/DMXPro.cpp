@@ -19,7 +19,7 @@ using namespace ci::app;
 using namespace std;
 
 
-DMXPro::DMXPro( const string &serialDevicePath ) : mDMXPacket(NULL), mSerialDevicePath(serialDevicePath), mSerial(NULL)
+DMXPro::DMXPro( const string &deviceName ) : mDMXPacket(NULL), mSerialDeviceName(deviceName), mSerial(NULL)
 {	
 	mThreadSleepFor = 1000 / DMXPRO_FRAME_RATE;
     
@@ -96,7 +96,7 @@ void DMXPro::initSerial(bool initWithZeros)
 	
 	try 
     {
-		Serial::Device dev = findDeviceByPathContains(mSerialDevicePath);
+        Serial::Device dev = Serial::findDeviceByNameContains(mSerialDeviceName);
 		mSerial = new Serial( dev, DMXPRO_BAUD_RATE );
         console() << "DMXPro > Connected to usb DMX interface: " << dev.getName() << endl;
 	}
@@ -143,17 +143,6 @@ void DMXPro::sendDMXData()
 	}
     
     console() << "DMXPro > sendDMXData() thread exited!" << endl;
-}
-
-
-Serial::Device DMXPro::findDeviceByPathContains( const string &searchString) 
-{
-	const std::vector<Serial::Device> &devices = Serial::getDevices();
-	for( std::vector<Serial::Device>::const_iterator deviceIt = devices.begin(); deviceIt != devices.end(); ++deviceIt ) {
-		if( deviceIt->getPath().find( searchString ) != std::string::npos )
-			return *deviceIt;
-	}
-	return Serial::Device();
 }
 
 

@@ -37,25 +37,27 @@ class DMXPro{
 
 public:
   
-    static DMXProRef create( const std::string &serialDevicePath )
+    static DMXProRef create( const std::string &deviceName )
     {
-        return DMXProRef( new DMXPro( serialDevicePath ) );
+        return DMXProRef( new DMXPro( deviceName ) );
     }
     
 	~DMXPro();
 
 	void init(bool initWithZeros = true);
 
-	ci::Serial::Device findDeviceByPathContains( const std::string &searchString);
-
 	static void listDevices()
     {
-		const std::vector<ci::Serial::Device> &devices( ci::Serial::getDevices(true) );
-		
+        const std::vector<ci::Serial::Device> &devices( ci::Serial::getDevices(true) );
+
+        ci::app::console() << "--- DMX usb pro > List serial devices ---" << std::endl;
+        
         for( std::vector<ci::Serial::Device>::const_iterator deviceIt = devices.begin(); deviceIt != devices.end(); ++deviceIt )
-            ci::app::console() << "DMX usb pro > List serial devices: " + deviceIt->getPath() << std::endl;
-	}
-    
+            ci::app::console() << deviceIt->getName() << std::endl;
+
+        ci::app::console() << "-----------------------------------------" << std::endl;
+    }
+
     static std::vector<std::string> getDevicesList()
     {
         std::vector<std::string> devicesList;
@@ -78,11 +80,11 @@ public:
 	
 	void	shutdown(bool send_zeros = true);
 	
-    std::string  getDeviceName() { return mSerialDevicePath; }
+    std::string  getDeviceName() { return mSerialDeviceName; }
 	
 private:
     
-    DMXPro( const std::string &serialDevicePath );
+    DMXPro( const std::string &deviceName );
 
 	void initDMX();
     
@@ -96,7 +98,7 @@ private:
 	ci::Serial		*mSerial;				// serial interface
 	int				mThreadSleepFor;		// sleep for N ms, this is based on the FRAME_RATE
 	std::mutex      mDMXDataMutex;			// mutex unique lock
-	std::string		mSerialDevicePath;		// usb serial device path
+	std::string		mSerialDeviceName;		// usb serial device name
     std::thread     mSendDataThread;
     bool            mRunSendDataThread;
     
