@@ -9,7 +9,7 @@
  *
  */
 
-#include "cinder/app/AppBasic.h"
+#include "cinder/app/App.h"
 #include "cinder/Utilities.h"
 #include <iostream>
 #include "DMXPro.h"
@@ -42,7 +42,6 @@ DMXPro::~DMXPro()
     if ( mSerial )
     {
         mSerial->flush();
-        delete mSerial;
         mSerial = NULL;
     }
     
@@ -60,8 +59,7 @@ void DMXPro::shutdown(bool send_zeros)
 			setZeros();					// send zeros to all channels
 		
 		ci::sleep( mThreadSleepFor*2 );
-		mSerial->flush();	
-		delete mSerial;
+		mSerial->flush();
 		mSerial = NULL;
 		ci::sleep(50);	
 	}
@@ -88,16 +86,15 @@ void DMXPro::initSerial(bool initWithZeros)
             console() << "DMXPro > Init serial with zeros() before disconnect" << endl;
 			ci::sleep(100);	
 		}
-		mSerial->flush();	
-		delete mSerial;
+		mSerial->flush();
 		mSerial = NULL;
 		ci::sleep(50);	
 	}
 	
 	try 
     {
-        Serial::Device dev = Serial::findDeviceByNameContains(mSerialDeviceName);
-		mSerial = new Serial( dev, DMXPRO_BAUD_RATE );
+			const Serial::Device dev = Serial::findDeviceByNameContains(mSerialDeviceName);
+			mSerial = Serial::create( dev, DMXPRO_BAUD_RATE );
         console() << "DMXPro > Connected to usb DMX interface: " << dev.getName() << endl;
 	}
 	catch( ... ) 
