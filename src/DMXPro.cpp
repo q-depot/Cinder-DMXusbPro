@@ -150,10 +150,11 @@ void DMXPro::setValue(int value, int channel)
         console() << "DMXPro > invalid DMX channel: " << channel << endl;
         return;
 	}
-    // DMX channels start form byte [5] and end at byte [DMXPRO_PACKET_SIZE-2], last byte is EOT(0xE7)        
+    // DMX channels start from byte [5] and end at byte [DMXPRO_PACKET_SIZE-2], last byte is EOT(0xE7)
 	value = math<int>::clamp(value, 0, 255);
 	std::unique_lock<std::mutex> dataLock(mDMXDataMutex);			// get DMX packet UNIQUE lock
-	mDMXPacket[ 5 + channel ] = value;                                  // update value
+	// LA NOTE: added -1 so that dmx addresses would start at 1, not 0
+    mDMXPacket[ 5 + channel - 1 ] = value;                                  // update value
 	dataLock.unlock();													// unlock mutex
 }
 

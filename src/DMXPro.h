@@ -18,7 +18,7 @@
 #include "cinder/Serial.h"
 
 
-#define DMXPRO_START_MSG		0x7E		// Start of message delimiter
+#define DMXPRO_START_MSG		0x7E		// Start of message d elimiter
 #define DMXPRO_END_MSG			0xE7		// End of message delimiter
 #define DMXPRO_SEND_LABEL		6			// Output Only Send DMX Packet Request
 #define DMXPRO_BAUD_RATE		57600		// virtual COM doesn't control the usb, this is just a dummy value
@@ -39,7 +39,7 @@ public:
   
     static DMXProRef create( const std::string &deviceName )
     {
-        return DMXProRef( new DMXPro( deviceName ) );
+       	 return DMXProRef( new DMXPro( deviceName ) );
     }
     
 	~DMXPro();
