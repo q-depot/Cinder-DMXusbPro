@@ -13,6 +13,7 @@
 #include "cinder/Utilities.h"
 #include <iostream>
 #include "DMXPro.h"
+#include "cinder/Log.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -140,6 +141,37 @@ void DMXPro::sendDMXData()
 	}
 
 	console() << "DMXPro > sendDMXData() thread exited!" << endl;
+}
+
+void DMXPro::dataSendLoop()
+{
+	ci::ThreadSetup threadSetup;
+	CI_LOG_I("Starting DMX loop.");
+	mRunSendDataThread = true;
+
+	auto before = std::chrono::high_resolution_clock::now();
+	while (mSerial && mRunSendDataThread)
+	{
+		{
+			std::lock_guard<std::mutex> lock(mBodyMutex);
+			auto header = std::array<uint8_t, 5>{
+				DMXPRO_START_MSG,
+				DMXPRO_SEND_LABEL,
+				(uint8_t)(mBody.size() & 0xFF),        // data length least significant byte
+				(uint8_t)((mBody.size() >> 8) & 0xFF), // data length most significant byte
+				0 // used in previous implementation (though marked as having unknown purpose); perhaps DMXPro device has an offset?
+			};
+
+			mSerial->writeBytes(header.data(), header.size());
+			mSerial->writeBytes(mBody.data(), mBody.size());
+		}
+		mSerial->writeByte(DMXPRO_END_MSG);
+
+		auto after = std::chrono::high_resolution_clock::now();
+		auto actualFrameTime = after - before;
+		before = after;
+		std::this_thread::sleep_for(mTargetFrameTime - actualFrameTime);
+	}
 }
 
 

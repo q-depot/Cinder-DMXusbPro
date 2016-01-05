@@ -71,6 +71,10 @@ public:
 	bool	isConnected() { return mSerial != NULL; }
 
 	void	setValue(int value, int channel);
+	void	bufferData(const std::vector<uint8_t> &data) {
+		std::lock_guard<std::mutex> lock(mBodyMutex);
+		mBody = data;
+	}
 
 	void	reconnect();
 
@@ -87,17 +91,20 @@ private:
 	void initSerial(bool initWithZeros);
 
 	void			sendDMXData();
+	void dataSendLoop();
 
 private:
 
 	unsigned char	*mDMXPacket;			// DMX packet, it contains bytes
+	std::vector<uint8_t>	mBody;
+	std::mutex						mBodyMutex;
+	std::chrono::high_resolution_clock::duration mTargetFrameTime;
 	ci::SerialRef	mSerial;				// serial interface
 	int				mThreadSleepFor;		// sleep for N ms, this is based on the FRAME_RATE
 	std::mutex      mDMXDataMutex;			// mutex unique lock
 	std::string		mSerialDeviceName;		// usb serial device name
-	std::thread     mSendDataThread;
-	bool            mRunSendDataThread;
-
+	std::thread      mSendDataThread;
+	std::atomic_bool mRunSendDataThread;
 
 private:
 	// disallow
