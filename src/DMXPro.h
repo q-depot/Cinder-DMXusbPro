@@ -27,6 +27,7 @@ const auto DMXPRO_FRAME_RATE  = 35;    // dmx send frame rate
 const auto DMXPRO_DATA_SIZE   = 513;   // include first byte 0x00, what's that?
 const auto DMXPRO_PACKET_SIZE = 518;   // data + 4 bytes(DMXPRO_START_MSG, DMXPRO_SEND_LABEL, DATA_SIZE_LSB, DATA_SIZE_MSB) at the beginning and 1 byte(DMXPRO_END_MSG) at the end
 
+// TODO: test this alarming claim:
 //////////////////////////////////////////////////////////
 // LAST 4 dmx channels seem not to be working, 508-511 !!!
 //////////////////////////////////////////////////////////
