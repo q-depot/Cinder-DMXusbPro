@@ -9,29 +9,25 @@
  *
  */
 
-#ifndef DMX_USB_PRO
-#define DMX_USB_PRO
-
 #pragma once
 
 #include "cinder/Thread.h"
 #include "cinder/Serial.h"
 
-
-#define DMXPRO_START_MSG		0x7E		// Start of message d elimiter
-#define DMXPRO_END_MSG			0xE7		// End of message delimiter
-#define DMXPRO_SEND_LABEL		6			// Output Only Send DMX Packet Request
-#define DMXPRO_BAUD_RATE		57600		// virtual COM doesn't control the usb, this is just a dummy value
-#define DMXPRO_FRAME_RATE		35			// dmx send frame rate
-#define DMXPRO_DATA_SIZE       	513         // include first byte 0x00, what's that?
-#define DMXPRO_PACKET_SIZE      518         // data + 4 bytes(DMXPRO_START_MSG, DMXPRO_SEND_LABEL, DATA_SIZE_LSB, DATA_SIZE_MSB) at the beginning and 1 byte(DMXPRO_END_MSG) at the end
+const auto DMXPRO_START_MSG   = 0x7E;  // Start of message delimiter
+const auto DMXPRO_END_MSG     = 0xE7;  // End of message delimiter
+const auto DMXPRO_SEND_LABEL  = 6;     // Output Only Send DMX Packet Request
+const auto DMXPRO_BAUD_RATE   = 57600; // virtual COM doesn't control the usb, this is just a dummy value
+const auto DMXPRO_FRAME_RATE  = 35;    // dmx send frame rate
+const auto DMXPRO_DATA_SIZE   = 513;   // include first byte 0x00, what's that?
+const auto DMXPRO_PACKET_SIZE = 518;   // data + 4 bytes(DMXPRO_START_MSG, DMXPRO_SEND_LABEL, DATA_SIZE_LSB, DATA_SIZE_MSB) at the beginning and 1 byte(DMXPRO_END_MSG) at the end
 
 //////////////////////////////////////////////////////////
 // LAST 4 dmx channels seem not to be working, 508-511 !!!
 //////////////////////////////////////////////////////////
 
 class DMXPro;
-typedef std::shared_ptr<DMXPro> DMXProRef;
+using DMXProRef = std::shared_ptr<DMXPro>;
 
 class DMXPro{
 
@@ -109,6 +105,3 @@ private:
     DMXPro& operator=(const DMXPro&);
     
 };
-
-
-#endif

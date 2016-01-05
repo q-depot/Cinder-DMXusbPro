@@ -164,4 +164,3 @@ void DMXPro::setZeros()
     for (int i=5; i < DMXPRO_PACKET_SIZE-2; i++)                        // DMX channels start form byte [5] and end at byte [DMXPRO_PACKET_SIZE-2], last byte is EOT(0xE7)
 		mDMXPacket[i] = 0;
 }
-
