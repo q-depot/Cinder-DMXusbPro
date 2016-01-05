@@ -20,127 +20,63 @@ using namespace ci::app;
 using namespace std;
 
 
-DMXPro::DMXPro( const string &deviceName ) : mDMXPacket(NULL), mSerialDeviceName(deviceName), mSerial(NULL)
+DMXPro::DMXPro()
 {
-	mThreadSleepFor = 1000 / DMXPRO_FRAME_RATE;
-
-	init();
-
-	setZeros();
+	mTargetFrameTime = std::chrono::milliseconds(1000 / DMXPRO_FRAME_RATE);
+	mBody.assign(512, 0);
 }
-
 
 DMXPro::~DMXPro()
 {
-	setZeros();
+	CI_LOG_I("Shutting down DMX connection: " << mSerialDeviceName);
 
-	ci::sleep(50);
+	stopLoop();
+	// For now, turn out the lights as the previous implementation did so.
+	// In future, perhaps it is better to let the user specify what to do.
+	fillBuffer(0);
+	writeData();
+	closeConnection();
+}
 
+void DMXPro::closeConnection() {
+	stopLoop();
+
+	if (mSerial) {
+		mSerial->flush();
+		mSerial.reset();
+	}
+}
+
+void DMXPro::startLoop() {
+	mRunSendDataThread = true;
+	mSendDataThread = std::thread(&DMXPro::dataSendLoop, this);
+}
+
+void DMXPro::stopLoop() {
 	mRunSendDataThread = false;
-	if ( mSendDataThread.joinable() )
+	if (mSendDataThread.joinable()) {
 		mSendDataThread.join();
-
-	if ( mSerial )
-	{
-		mSerial->flush();
-		mSerial = NULL;
 	}
-
-
-	delete []mDMXPacket;
-
-	console() << "shutdown DMXPro" << endl;
 }
 
-void DMXPro::shutdown(bool send_zeros)
+bool DMXPro::connect(const std::string &deviceName)
 {
-	if ( mSerial )
-	{
-		if (send_zeros)
-			setZeros();					// send zeros to all channels
-
-		ci::sleep( mThreadSleepFor*2 );
-		mSerial->flush();
-		mSerial = NULL;
-		ci::sleep(50);
-	}
-	console() << "DMXPro > shutdown!" << endl;
-}
-
-
-void DMXPro::init(bool initWithZeros)
-{
-	console() << "DMXPro > Initializing device" << endl;
-
-	initDMX();
-	initSerial(initWithZeros);
-}
-
-
-void DMXPro::initSerial(bool initWithZeros)
-{
-	if ( mSerial )
-	{
-		if (initWithZeros)
-		{
-			setZeros();					// send zeros to all channels
-			console() << "DMXPro > Init serial with zeros() before disconnect" << endl;
-			ci::sleep(100);
-		}
-		mSerial->flush();
-		mSerial = NULL;
-		ci::sleep(50);
-	}
+	closeConnection();
+	mSerialDeviceName = deviceName;
 
 	try
 	{
 		const Serial::Device dev = Serial::findDeviceByNameContains(mSerialDeviceName);
 		mSerial = Serial::create( dev, DMXPRO_BAUD_RATE );
-		console() << "DMXPro > Connected to usb DMX interface: " << dev.getName() << endl;
+
+		startLoop();
+		return true;
 	}
-	catch( ... )
+	catch(const std::exception &exc)
 	{
-		console() << "DMXPro > There was an error initializing the usb DMX device" << endl;
-		mSerial = NULL;
+		CI_LOG_E("Error initializing DMX device: " << exc.what());
+		return false;
 	}
-
-	mSendDataThread = std::thread( &DMXPro::sendDMXData, this );
-}
-
-
-void DMXPro::initDMX()
-{
-	delete []mDMXPacket;
-	mDMXPacket	= NULL;
-	mDMXPacket	= new unsigned char[DMXPRO_PACKET_SIZE];
-
-	// LAST 4 dmx channels seem not to be working, 508-511 !!!
-
-	for (int i=0; i < DMXPRO_PACKET_SIZE; i++)                      // initialize all channels with zeros, data starts from [5]
-		mDMXPacket[i] = 0;
-
-	mDMXPacket[0] = DMXPRO_START_MSG;								// DMX start delimiter 0x7E
-	mDMXPacket[1] = DMXPRO_SEND_LABEL;								// set message type
-	mDMXPacket[2] = (int)DMXPRO_DATA_SIZE & 0xFF;					// Data Length LSB
-	mDMXPacket[3] = ((int)DMXPRO_DATA_SIZE >> 8) & 0xFF;            // Data Length MSB
-	mDMXPacket[4] = 0;                                              // NO IDEA what this is for!
-	mDMXPacket[DMXPRO_PACKET_SIZE-1] = DMXPRO_END_MSG;              // DMX start delimiter 0xE7
-}
-
-
-void DMXPro::sendDMXData()
-{
-	mRunSendDataThread = true;
-
-	while( mSerial && mRunSendDataThread )
-	{
-		std::unique_lock<std::mutex> dataLock(mDMXDataMutex);                           // get DMX packet UNIQUE lock
-		mSerial->writeBytes( mDMXPacket, DMXPRO_PACKET_SIZE );                          // send data
-		dataLock.unlock();                                                              // unlock data
-		std::this_thread::sleep_for( std::chrono::milliseconds( mThreadSleepFor ) );
-	}
-
-	console() << "DMXPro > sendDMXData() thread exited!" << endl;
 }
 
 void DMXPro::dataSendLoop()
@@ -153,27 +89,33 @@ void DMXPro::dataSendLoop()
 	while (mSerial && mRunSendDataThread)
 	{
 		writeData();
+
 		auto after = std::chrono::high_resolution_clock::now();
 		auto actualFrameTime = after - before;
 		before = after;
 		std::this_thread::sleep_for(mTargetFrameTime - actualFrameTime);
 	}
+
+	CI_LOG_I("Exiting DMX loop.");
 }
 
 void DMXPro::writeData()
 {
 	std::lock_guard<std::mutex> lock(mBodyMutex);
-	auto header = std::array<uint8_t, 5>{
+	auto messageSize = mBody.size() + 1; // account for start code in message size
+	auto header = std::array<uint8_t, 5> {
 		DMXPRO_START_MSG,
 		DMXPRO_SEND_LABEL,
-		(uint8_t)(mBody.size() & 0xFF),        // data length least significant byte
-		(uint8_t)((mBody.size() >> 8) & 0xFF), // data length most significant byte
-		0 // used in previous implementation (though marked as having unknown purpose); perhaps DMXPro device has an offset?
+		(uint8_t)(messageSize & 0xFF),        // data length least significant byte
+		(uint8_t)((messageSize >> 8) & 0xFF), // data length most significant byte
+		DMXPRO_START_CODE
 	};
 
-	mSerial->writeBytes(header.data(), header.size());
-	mSerial->writeBytes(mBody.data(), mBody.size());
-	mSerial->writeByte(DMXPRO_END_MSG);
+	if (mSerial) {
+		mSerial->writeBytes(header.data(), header.size());
+		mSerial->writeBytes(mBody.data(), mBody.size());
+		mSerial->writeByte(DMXPRO_END_MSG);
+	}
 }
 
 void DMXPro::setValue(uint8_t value, int channel)
