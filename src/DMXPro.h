@@ -9,6 +9,11 @@
  *
  */
 
+ ///
+ /// View device specifications here: https://www.enttec.com/docs/dmx_usb_pro_api_spec.pdf
+ /// Heavily modified from Andrea Cuius' implementation
+ ///
+
 #pragma once
 
 #include "cinder/Thread.h"
