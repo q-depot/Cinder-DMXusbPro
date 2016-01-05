@@ -32,6 +32,21 @@ const auto DMXPRO_PACKET_SIZE = 518;   // data + 4 bytes(DMXPRO_START_MSG, DMXPR
 // LAST 4 dmx channels seem not to be working, 508-511 !!!
 //////////////////////////////////////////////////////////
 
+/// Buffer to simplify building up data for DMX transmission.
+class DMXColorBuffer {
+public:
+	DMXColorBuffer();
+	/// Set an individual channel value.
+	void setValue(uint8_t value, size_t channel);
+	/// Set a color value across three channels.
+	void setValue(const ci::Color8u &color, size_t channel);
+
+	const uint8_t* data() const { return _data.data(); }
+	size_t size() const { return _data.size(); }
+private:
+	std::array<uint8_t, 512> _data;
+};
+
 class DMXPro;
 using DMXProRef = std::shared_ptr<DMXPro>;
 
@@ -85,6 +100,15 @@ public:
 	void	reconnect();
 
 	void	shutdown(bool send_zeros = true);
+	/// Buffer all message data to be sent on the next DMX update. Threadsafe.
+	void bufferData(const std::vector<uint8_t> &data);
+	void bufferData(const uint8_t *data, size_t size);
+	void bufferData(const DMXColorBuffer &buffer) { bufferData(buffer.data(), buffer.size()); }
+	/// Fill the data buffer with a single value. Threadsafe.
+	void fillBuffer(uint8_t value);
+	/// Set an individual channel value using 1-indexed positions.
+	[[deprecated("This method can result in incomplete data being sent over the wire. Use bufferData with a DMXColorBuffer instead.")]]
+	void	setValue(uint8_t value, int channel);
 
 	std::string  getDeviceName() { return mSerialDeviceName; }
 

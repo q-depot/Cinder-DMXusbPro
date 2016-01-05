@@ -176,29 +176,46 @@ void DMXPro::writeData()
 	mSerial->writeByte(DMXPRO_END_MSG);
 }
 
-void DMXPro::setValue(int value, int channel)
+void DMXPro::setValue(uint8_t value, int channel)
 {
-	if ( channel < 0 || channel > DMXPRO_PACKET_SIZE-2 )
-	{
-		console() << "DMXPro > invalid DMX channel: " << channel << endl;
-		return;
-	}
-	// DMX channels start from byte [5] and end at byte [DMXPRO_PACKET_SIZE-2], last byte is EOT(0xE7)
-	value = math<int>::clamp(value, 0, 255);
-	std::unique_lock<std::mutex> dataLock(mDMXDataMutex);			// get DMX packet UNIQUE lock
-	// LA NOTE: added -1 so that dmx addresses would start at 1, not 0
-	mDMXPacket[ 5 + channel - 1 ] = value;                                  // update value
-	dataLock.unlock();													// unlock mutex
+	channel = glm::clamp<int>(channel - 1, 0, mBody.size() - 1);
+	std::lock_guard<std::mutex> lock(mBodyMutex);
+	mBody.at(channel) = value;
 }
 
-
-void DMXPro::setZeros()
+void DMXPro::bufferData(const std::vector<uint8_t> &data)
 {
 	std::lock_guard<std::mutex> lock(mBodyMutex);
-	for (auto &dataPoint : mBody) {
-		dataPoint = 0;
-	}
+	mBody = data;
+}
 
-	for (int i=5; i < DMXPRO_PACKET_SIZE-2; i++)                        // DMX channels start form byte [5] and end at byte [DMXPRO_PACKET_SIZE-2], last byte is EOT(0xE7)
-		mDMXPacket[i] = 0;
+void DMXPro::bufferData(const uint8_t *data, size_t size)
+{
+	std::lock_guard<std::mutex> lock(mBodyMutex);
+	mBody.assign(data, data + size);
+}
+
+void DMXPro::fillBuffer(uint8_t value)
+{
+	std::lock_guard<std::mutex> lock(mBodyMutex);
+	mBody.assign(512, value);
+}
+
+#pragma mark - DMX Color Buffer
+
+DMXColorBuffer::DMXColorBuffer()
+{
+	_data.fill(0);
+}
+
+void DMXColorBuffer::setValue(uint8_t value, size_t channel) {
+	channel = std::min(channel, _data.size() - 1);
+	_data[channel] = value;
+}
+
+void DMXColorBuffer::setValue(const ci::Color8u &color, size_t channel) {
+	channel = std::min(channel, _data.size() - 3);
+	_data[channel] = color.r;
+	_data[channel + 1] = color.g;
+	_data[channel + 2] = color.b;
 }
