@@ -152,21 +152,7 @@ void DMXPro::dataSendLoop()
 	auto before = std::chrono::high_resolution_clock::now();
 	while (mSerial && mRunSendDataThread)
 	{
-		{
-			std::lock_guard<std::mutex> lock(mBodyMutex);
-			auto header = std::array<uint8_t, 5>{
-				DMXPRO_START_MSG,
-				DMXPRO_SEND_LABEL,
-				(uint8_t)(mBody.size() & 0xFF),        // data length least significant byte
-				(uint8_t)((mBody.size() >> 8) & 0xFF), // data length most significant byte
-				0 // used in previous implementation (though marked as having unknown purpose); perhaps DMXPro device has an offset?
-			};
-
-			mSerial->writeBytes(header.data(), header.size());
-			mSerial->writeBytes(mBody.data(), mBody.size());
-		}
-		mSerial->writeByte(DMXPRO_END_MSG);
-
+		writeData();
 		auto after = std::chrono::high_resolution_clock::now();
 		auto actualFrameTime = after - before;
 		before = after;
@@ -174,6 +160,21 @@ void DMXPro::dataSendLoop()
 	}
 }
 
+void DMXPro::writeData()
+{
+	std::lock_guard<std::mutex> lock(mBodyMutex);
+	auto header = std::array<uint8_t, 5>{
+		DMXPRO_START_MSG,
+		DMXPRO_SEND_LABEL,
+		(uint8_t)(mBody.size() & 0xFF),        // data length least significant byte
+		(uint8_t)((mBody.size() >> 8) & 0xFF), // data length most significant byte
+		0 // used in previous implementation (though marked as having unknown purpose); perhaps DMXPro device has an offset?
+	};
+
+	mSerial->writeBytes(header.data(), header.size());
+	mSerial->writeBytes(mBody.data(), mBody.size());
+	mSerial->writeByte(DMXPRO_END_MSG);
+}
 
 void DMXPro::setValue(int value, int channel)
 {
@@ -193,6 +194,11 @@ void DMXPro::setValue(int value, int channel)
 
 void DMXPro::setZeros()
 {
+	std::lock_guard<std::mutex> lock(mBodyMutex);
+	for (auto &dataPoint : mBody) {
+		dataPoint = 0;
+	}
+
 	for (int i=5; i < DMXPRO_PACKET_SIZE-2; i++)                        // DMX channels start form byte [5] and end at byte [DMXPRO_PACKET_SIZE-2], last byte is EOT(0xE7)
 		mDMXPacket[i] = 0;
 }

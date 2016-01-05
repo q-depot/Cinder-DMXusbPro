@@ -91,7 +91,10 @@ private:
 	void initSerial(bool initWithZeros);
 
 	void			sendDMXData();
+	///
 	void dataSendLoop();
+	/// Actually send data to DMX device.
+	void writeData();
 
 private:
 
