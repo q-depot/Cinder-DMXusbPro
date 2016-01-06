@@ -75,9 +75,6 @@ public:
 	void bufferData(const DMXColorBuffer &buffer) { bufferData(buffer.data(), buffer.size()); }
 	/// Fill the data buffer with a single value. Threadsafe.
 	void fillBuffer(uint8_t value);
-	/// Set an individual channel value using 1-indexed positions.
-	[[deprecated("This method can result in incomplete data being sent over the wire. Use bufferData with a DMXColorBuffer instead.")]]
-	void	setValue(uint8_t value, int channel);
 
 	std::string  getDeviceName() { return mSerialDeviceName; }
 	/// Start update loop (called automatically by connect).

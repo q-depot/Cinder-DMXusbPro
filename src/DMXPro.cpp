@@ -118,13 +118,6 @@ void DMXPro::writeData()
 	}
 }
 
-void DMXPro::setValue(uint8_t value, int channel)
-{
-	std::lock_guard<std::mutex> lock(mBodyMutex);
-	channel = glm::clamp<int>(channel - 1, 0, mBody.size() - 1);
-	mBody.at(channel) = value;
-}
-
 void DMXPro::bufferData(const std::vector<uint8_t> &data)
 {
 	std::lock_guard<std::mutex> lock(mBodyMutex);
