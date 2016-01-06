@@ -48,7 +48,7 @@ using DMXProRef = std::shared_ptr<DMXPro>;
 class DMXPro {
 
 public:
-	DMXPro();
+	explicit DMXPro(int deviceFPS = 35);
 	~DMXPro();
 
 	DMXPro(const DMXPro&) = delete;

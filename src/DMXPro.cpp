@@ -20,7 +20,6 @@ using namespace ci::app;
 using namespace std;
 
 const auto DMXProDummyBaudRate = 57600;
-const auto DMXProFrameRate = 35;
 
 const auto BodySize = size_t(512);
 const auto DataSize = BodySize + 1; // account for start code in message size
@@ -38,9 +37,9 @@ const auto MessageFooter = std::array<uint8_t, 1> {
 
 const auto MessageSize = BodySize + MessageHeader.size() + MessageFooter.size();
 
-DMXPro::DMXPro()
+DMXPro::DMXPro(int deviceFPS)
 {
-	mTargetFrameTime = std::chrono::milliseconds(1000 / DMXProFrameRate);
+	mTargetFrameTime = std::chrono::milliseconds(1000 / deviceFPS);
 	mBody.assign(BodySize, 0);
 }
 
