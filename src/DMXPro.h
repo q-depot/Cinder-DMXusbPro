@@ -28,9 +28,9 @@
 class DMXColorBuffer {
 public:
 	DMXColorBuffer();
-	/// Set an individual channel value.
+	/// Set an individual channel value. Zero indexed (subtract one if you are 1-indexed).
 	void setValue(uint8_t value, size_t channel);
-	/// Set a color value across three channels.
+	/// Set a color value across three channels. Zero indexed (subtract one if you are 1-indexed).
 	void setValue(const ci::Color8u &color, size_t channel);
 
 	const uint8_t* data() const { return _data.data(); }
