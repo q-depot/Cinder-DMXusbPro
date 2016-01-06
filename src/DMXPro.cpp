@@ -19,6 +19,12 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
+const auto DMXPRO_START_MSG   = 0x7E;  // Start of message delimiter
+const auto DMXPRO_END_MSG     = 0xE7;  // End of message delimiter
+const auto DMXPRO_SEND_LABEL  = 6;     // Output Only Send DMX Packet Request
+const auto DMXPRO_BAUD_RATE   = 57600; // virtual COM doesn't control the usb, this is just a dummy value
+const auto DMXPRO_FRAME_RATE  = 35;    // dmx send frame rate
+const auto DMXPRO_START_CODE  = 0;
 
 DMXPro::DMXPro()
 {
