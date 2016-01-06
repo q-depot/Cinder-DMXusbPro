@@ -37,10 +37,11 @@ const auto MessageFooter = std::array<uint8_t, 1> {
 
 const auto MessageSize = BodySize + MessageHeader.size() + MessageFooter.size();
 
-DMXPro::DMXPro(int deviceFPS)
+DMXPro::DMXPro(const std::string &deviceName, int deviceFPS)
 {
 	mTargetFrameTime = std::chrono::milliseconds(1000 / deviceFPS);
 	mBody.assign(BodySize, 0);
+	connect(deviceName);
 }
 
 DMXPro::~DMXPro()
@@ -92,6 +93,7 @@ bool DMXPro::connect(const std::string &deviceName)
 	catch(const std::exception &exc)
 	{
 		CI_LOG_E("Error initializing DMX device: " << exc.what());
+		CI_ASSERT(mSerial == nullptr);
 		return false;
 	}
 }

@@ -48,7 +48,7 @@ using DMXProRef = std::shared_ptr<DMXPro>;
 class DMXPro {
 
 public:
-	explicit DMXPro(int deviceFPS = 35);
+	explicit DMXPro(const std::string &deviceName, int deviceFPS = 35);
 	~DMXPro();
 
 	DMXPro(const DMXPro&) = delete;
@@ -56,6 +56,7 @@ public:
 
 	/// Connect to a serial device.
 	bool connect(const std::string &deviceName);
+	bool isConnected() const { return mSerial != nullptr; }
 	/// Disconnect from serial device.
 	void closeConnection();
 
