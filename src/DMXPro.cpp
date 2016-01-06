@@ -19,8 +19,9 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
-const auto DMXProDummyBaudRate = 57600;
+namespace {
 
+const auto DMXProDummyBaudRate = 57600;
 const auto BodySize = size_t(512);
 const auto DataSize = BodySize + 1; // account for start code in message size
 const auto MessageHeader = std::array<uint8_t, 5> {
@@ -35,7 +36,7 @@ const auto MessageFooter = std::array<uint8_t, 1> {
 	0xE7 // End of message
 };
 
-const auto MessageSize = BodySize + MessageHeader.size() + MessageFooter.size();
+} // namespace
 
 DMXPro::DMXPro(const std::string &deviceName, int deviceFPS)
 {
