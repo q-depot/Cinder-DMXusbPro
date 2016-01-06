@@ -44,10 +44,13 @@ using DMXProRef = std::shared_ptr<DMXPro>;
 
 ///
 /// RAII-style controller for a DMXPro box.
+/// Only streams values out to the box. Not used for configuring the DMX hardware.
 ///
 class DMXPro {
 
 public:
+	/// Construct a DMX controller that connects to device and sends data at given FPS.
+	/// Device can run between 1 and 40 FPS, so there is no point sending data more often.
 	explicit DMXPro(const std::string &deviceName, int deviceFPS = 35);
 	~DMXPro();
 
