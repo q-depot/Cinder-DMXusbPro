@@ -19,33 +19,29 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
-const auto DMXPRO_START_MSG   = 0x7E;  // Start of message delimiter
-const auto DMXPRO_END_MSG     = 0xE7;  // End of message delimiter
-const auto DMXPRO_SEND_LABEL  = 6;     // Output Only Send DMX Packet Request
-const auto DMXPRO_BAUD_RATE   = 57600; // virtual COM doesn't control the usb, this is just a dummy value
-const auto DMXPRO_FRAME_RATE  = 35;    // dmx send frame rate
-const auto DMXPRO_START_CODE  = 0;
+const auto DMXProDummyBaudRate = 57600;
+const auto DMXProFrameRate = 35;
 
 const auto BodySize = size_t(512);
 const auto DataSize = BodySize + 1; // account for start code in message size
 const auto MessageHeader = std::array<uint8_t, 5> {
-	DMXPRO_START_MSG,
-	DMXPRO_SEND_LABEL,
+	0x7E,  // Start of message
+	6,     // Output Only Send DMX Packet Request
 	(uint8_t)(DataSize & 0xFF),        // data length least significant byte
 	(uint8_t)((DataSize >> 8) & 0xFF), // data length most significant byte
-	DMXPRO_START_CODE
+	0      // start code for data
 };
 
 const auto MessageFooter = std::array<uint8_t, 1> {
-	DMXPRO_END_MSG
+	0xE7 // End of message
 };
 
 const auto MessageSize = BodySize + MessageHeader.size() + MessageFooter.size();
 
 DMXPro::DMXPro()
 {
-	mTargetFrameTime = std::chrono::milliseconds(1000 / DMXPRO_FRAME_RATE);
-	mBody.assign(512, 0);
+	mTargetFrameTime = std::chrono::milliseconds(1000 / DMXProFrameRate);
+	mBody.assign(BodySize, 0);
 }
 
 DMXPro::~DMXPro()
@@ -89,7 +85,7 @@ bool DMXPro::connect(const std::string &deviceName)
 	try
 	{
 		const Serial::Device dev = Serial::findDeviceByNameContains(mSerialDeviceName);
-		mSerial = Serial::create( dev, DMXPRO_BAUD_RATE );
+		mSerial = Serial::create(dev, DMXProDummyBaudRate);
 
 		startLoop();
 		return true;
