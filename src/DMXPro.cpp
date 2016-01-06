@@ -26,12 +26,13 @@ const auto DMXPRO_BAUD_RATE   = 57600; // virtual COM doesn't control the usb, t
 const auto DMXPRO_FRAME_RATE  = 35;    // dmx send frame rate
 const auto DMXPRO_START_CODE  = 0;
 
-const auto BodySize = 513; // account for start code in message size
+const auto BodySize = size_t(512);
+const auto DataSize = BodySize + 1; // account for start code in message size
 const auto MessageHeader = std::array<uint8_t, 5> {
 	DMXPRO_START_MSG,
 	DMXPRO_SEND_LABEL,
-	(uint8_t)(BodySize & 0xFF),        // data length least significant byte
-	(uint8_t)((BodySize >> 8) & 0xFF), // data length most significant byte
+	(uint8_t)(DataSize & 0xFF),        // data length least significant byte
+	(uint8_t)((DataSize >> 8) & 0xFF), // data length most significant byte
 	DMXPRO_START_CODE
 };
 
