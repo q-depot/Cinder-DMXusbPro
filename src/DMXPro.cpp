@@ -26,6 +26,21 @@ const auto DMXPRO_BAUD_RATE   = 57600; // virtual COM doesn't control the usb, t
 const auto DMXPRO_FRAME_RATE  = 35;    // dmx send frame rate
 const auto DMXPRO_START_CODE  = 0;
 
+const auto BodySize = 513; // account for start code in message size
+const auto MessageHeader = std::array<uint8_t, 5> {
+	DMXPRO_START_MSG,
+	DMXPRO_SEND_LABEL,
+	(uint8_t)(BodySize & 0xFF),        // data length least significant byte
+	(uint8_t)((BodySize >> 8) & 0xFF), // data length most significant byte
+	DMXPRO_START_CODE
+};
+
+const auto MessageFooter = std::array<uint8_t, 1> {
+	DMXPRO_END_MSG
+};
+
+const auto MessageSize = BodySize + MessageHeader.size() + MessageFooter.size();
+
 DMXPro::DMXPro()
 {
 	mTargetFrameTime = std::chrono::milliseconds(1000 / DMXPRO_FRAME_RATE);
@@ -108,19 +123,11 @@ void DMXPro::dataSendLoop()
 void DMXPro::writeData()
 {
 	std::lock_guard<std::mutex> lock(mBodyMutex);
-	auto messageSize = mBody.size() + 1; // account for start code in message size
-	auto header = std::array<uint8_t, 5> {
-		DMXPRO_START_MSG,
-		DMXPRO_SEND_LABEL,
-		(uint8_t)(messageSize & 0xFF),        // data length least significant byte
-		(uint8_t)((messageSize >> 8) & 0xFF), // data length most significant byte
-		DMXPRO_START_CODE
-	};
 
 	if (mSerial) {
-		mSerial->writeBytes(header.data(), header.size());
+		mSerial->writeBytes(MessageHeader.data(), MessageHeader.size());
 		mSerial->writeBytes(mBody.data(), mBody.size());
-		mSerial->writeByte(DMXPRO_END_MSG);
+		mSerial->writeBytes(MessageFooter.data(), MessageFooter.size());
 	}
 }
 
