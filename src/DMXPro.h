@@ -63,7 +63,6 @@ public:
 	void writeData();
 
 	/// Buffer all message data to be sent on the next DMX update. Threadsafe.
-	void bufferData(const std::vector<uint8_t> &data);
 	void bufferData(const uint8_t *data, size_t size);
 	void bufferData(const DMXColorBuffer &buffer) { bufferData(buffer.data(), buffer.size()); }
 	/// Fill the data buffer with a single value. Threadsafe.

@@ -124,12 +124,6 @@ void DMXPro::writeData()
 	}
 }
 
-void DMXPro::bufferData(const std::vector<uint8_t> &data)
-{
-	std::lock_guard<std::mutex> lock(mBodyMutex);
-	mBody = data;
-}
-
 void DMXPro::bufferData(const uint8_t *data, size_t size)
 {
 	std::lock_guard<std::mutex> lock(mBodyMutex);
