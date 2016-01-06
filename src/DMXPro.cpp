@@ -134,13 +134,14 @@ void DMXPro::writeData()
 void DMXPro::bufferData(const uint8_t *data, size_t size)
 {
 	std::lock_guard<std::mutex> lock(mBodyMutex);
-	mBody.assign(data, data + size);
+	size = std::min(size, mBody.size());
+	std::memcpy(mBody.data(), data, size);
 }
 
 void DMXPro::fillBuffer(uint8_t value)
 {
 	std::lock_guard<std::mutex> lock(mBodyMutex);
-	mBody.assign(512, value);
+	std::memset(mBody.data(), value, mBody.size());
 }
 
 #pragma mark - DMX Color Buffer
