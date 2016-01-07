@@ -12,18 +12,22 @@ using namespace std;
 class DMXBasicApp : public App {
 public:
 	void setup() override;
-	void mouseDown( MouseEvent event ) override;
+	void mouseDown(MouseEvent event) override;
+	void keyDown(KeyEvent event) override;
 	void update() override;
 	void draw() override;
 private:
-	dmx::EnttecDeviceRef _device;
-	dmx::ColorBuffer     _buffer;
+	dmx::EnttecDeviceRef				_device;
+	dmx::ColorBuffer						_buffer;
+	dmx::EnttecDevice::Settings _settings;
 };
 
 void DMXBasicApp::setup()
 {
 	// Connect to enttec device and run data loop at 30 fps.
 	_device = std::make_shared<dmx::EnttecDevice>("tty.usbserial-ENWER12L", 30);
+	// Load the device settings synchronously.
+	_settings = _device->loadSettings().get();
 }
 
 void DMXBasicApp::mouseDown( MouseEvent event )
@@ -31,6 +35,11 @@ void DMXBasicApp::mouseDown( MouseEvent event )
 	auto channel = mix<size_t>(0, _buffer.size(), (float)event.getPos().x / getWindowWidth());
 	auto value = mix(0, 255, (float)event.getPos().y / getWindowHeight());
 	_buffer.setChannelValues(channel, Color8u(value, value, value));
+}
+
+void DMXBasicApp::keyDown(cinder::app::KeyEvent event)
+{
+
 }
 
 void DMXBasicApp::update()
