@@ -96,7 +96,7 @@ bool EnttecDevice::connect(const std::string &device_name)
 	{
 		const Serial::Device dev = Serial::findDeviceByNameContains(device_name);
 		_serial = Serial::create(dev, EnttecDeviceDummyBaudRate);
-
+        _serial->flush();
 		startLoop();
 		return true;
 	}
@@ -159,12 +159,10 @@ std::future<EnttecDevice::Settings> EnttecDevice::loadSettings() const {
 
 		if (_serial) {
 			auto response = std::array<uint8_t, 8> {};
-			_serial->flush();
 			_serial->writeBytes(message.data(), message.size());
 			_serial->readBytes(response.data(), response.size());
 
 			CI_ASSERT(response[0] == StartOfMessage);
-			CI_ASSERT(response.back() == EndOfMessage);
 
 			auto response_type = response[1];
 			if (response_type == MessageLabel::GetWidgetParameters) {
