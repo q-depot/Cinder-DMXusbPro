@@ -219,3 +219,11 @@ void EnttecDevice::fillBuffer(uint8_t value)
 	std::lock_guard<std::mutex> lock(_data_mutex);
 	std::memset(_message_body.data(), value, _message_body.size());
 }
+
+std::ostream& operator << (std::ostream& os, const dmx::EnttecDevice::Settings& settings) {
+    os << "Firmware version: " << settings.firmware_number;
+		os << ", Break time: " << (int)settings.break_time;
+		os << ", Mark after break time: " << (int)settings.mark_after_break_time;
+		os << ", Device fps: " << (int)settings.device_fps;
+    return os;
+}

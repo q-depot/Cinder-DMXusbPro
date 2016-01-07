@@ -28,6 +28,7 @@ void DMXBasicApp::setup()
 	_device = std::make_shared<dmx::EnttecDevice>("tty.usbserial-ENWER12L", 30);
 	// Load the device settings synchronously.
 	_settings = _device->loadSettings().get();
+	console() << _settings << endl;
 }
 
 void DMXBasicApp::mouseDown( MouseEvent event )
