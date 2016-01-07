@@ -30,7 +30,7 @@ void DMXBasicApp::mouseDown( MouseEvent event )
 {
 	auto channel = mix<size_t>(0, _buffer.size(), (float)event.getPos().x / getWindowWidth());
 	auto value = mix(0, 255, (float)event.getPos().y / getWindowHeight());
-	_buffer.setValue(Color8u(value, value, value), channel);
+	_buffer.setChannelValues(channel, Color8u(value, value, value));
 }
 
 void DMXBasicApp::update()

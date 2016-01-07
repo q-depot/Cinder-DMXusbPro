@@ -16,9 +16,10 @@ class ColorBuffer {
 public:
 	ColorBuffer();
 	/// Set an individual channel value. Zero indexed.
-	void setValue(uint8_t value, size_t channel);
+	void setChannelValue(size_t channel, uint8_t value);
 	/// Set a color value. Colors occupy three channels, starting with the provided channel. Zero indexed.
-	void setValue(const ci::Color8u &color, size_t channel);
+	void setChannelValues(size_t channel, const ci::Color8u &color);
+	void setChannelValues(size_t channel, ci::ivec3 color);
 
 	const uint8_t* data() const { return _data.data(); }
 	size_t         size() const { return _data.size(); }
