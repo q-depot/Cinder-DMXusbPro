@@ -33,8 +33,8 @@ void DMXBasicApp::setup()
 	console() << _settings << endl;
 
     // As of now, it is unclear whether applying the settings works as expected.
-    _settings.device_fps = 30;
-    _device->applySettings(_settings);
+//    _settings.device_fps = 30;
+//    _device->applySettings(_settings);
 }
 
 void DMXBasicApp::update()
