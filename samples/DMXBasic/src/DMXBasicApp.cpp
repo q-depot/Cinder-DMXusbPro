@@ -12,8 +12,6 @@ using namespace std;
 class DMXBasicApp : public App {
 public:
 	void setup() override;
-	void mouseDrag(MouseEvent event) override;
-	void keyDown(KeyEvent event) override;
 	void update() override;
 	void draw() override;
 private:
@@ -33,26 +31,20 @@ void DMXBasicApp::setup()
 	// Load the device settings synchronously.
 	_settings = _device->loadSettings().get();
 	console() << _settings << endl;
+
+    // As of now, it is unclear whether applying the settings works as expected.
     _settings.device_fps = 30;
     _device->applySettings(_settings);
-//    _settings = _device->loadSettings().get();
-//    console() << "after change: " << _settings << endl;
-}
-
-void DMXBasicApp::mouseDrag( MouseEvent event )
-{
-    auto channel = mix<size_t>(0, _buffer.size(), (float)event.getPos().x / getWindowWidth());
-    auto value = mix(0, 255, (float)event.getPos().y / getWindowHeight());
-    _buffer.setChannelValue(channel, value);
-}
-
-void DMXBasicApp::keyDown(cinder::app::KeyEvent event)
-{
-
 }
 
 void DMXBasicApp::update()
 {
+    auto t = fract(getElapsedSeconds());
+    for (auto c = 0; c <= 512 - 3; c += 3) {
+        auto hue = fract(t + (c / 512.0f));
+        auto color = Color(CM_HSV, hue, 0.5, 0.5);
+        _buffer.setChannelValues(c, color);
+    }
 	_device->bufferData(_buffer);
 }
 
