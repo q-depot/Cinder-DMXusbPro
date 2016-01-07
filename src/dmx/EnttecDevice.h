@@ -55,6 +55,9 @@ public:
 	/// Stop update loop.
 	void stopLoop();
 
+	/// Set the DMX hardware's framerate and the rate at which we send new data to the hardware.
+	void setFramerate(int device_fps);
+
 private:
 	std::vector<uint8_t>	_message_body;
 	std::mutex						_data_mutex;

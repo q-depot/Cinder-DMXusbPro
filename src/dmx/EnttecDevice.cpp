@@ -32,6 +32,14 @@ enum MessageLabel {
 	SendRDMDiscovery = 11
 };
 
+uint8_t leastSignificantByte(int value) {
+	return value & 0xFF;
+}
+
+uint8_t mostSignificantByte(int value) {
+	return (value >> 8) & 0xFF;
+}
+
 } // namespace
 
 EnttecDevice::EnttecDevice(const std::string &device_name, int device_fps)
@@ -112,6 +120,24 @@ void EnttecDevice::dataSendLoop()
 	CI_LOG_I("Exiting DMX loop.");
 }
 
+void EnttecDevice::setFramerate(int device_fps) {
+	std::lock_guard<std::mutex> lock(_data_mutex);
+
+	const auto message = std::array<uint8_t, 8> {
+		StartOfMessage,
+		MessageLabel::SetWidgetParameters,
+		leastSignificantByte(0),
+		mostSignificantByte(0),
+		9, // output break time [9, 127]
+		1, // output mark after break time [1, 127]
+		glm::clamp<uint8_t>(device_fps, 0, 40),
+		EndOfMessage
+	};
+
+	_target_frame_time = std::chrono::milliseconds(1000 / device_fps);
+	_serial->writeBytes(message.data(), message.size());
+}
+
 void EnttecDevice::writeData()
 {
 	std::lock_guard<std::mutex> lock(_data_mutex);
@@ -121,9 +147,9 @@ void EnttecDevice::writeData()
 		const auto header = std::array<uint8_t, 5> {
 			StartOfMessage,  // Start of message
 			MessageLabel::OutputOnlySendDMXPacket,
-			(uint8_t)(data_size & 0xFF),        // data length least significant byte
-			(uint8_t)((data_size >> 8) & 0xFF), // data length most significant byte
-			0      // start code for data
+			leastSignificantByte(data_size),
+			mostSignificantByte(data_size),
+			0x00      // start code for data
 		};
 		_serial->writeBytes(header.data(), header.size());
 		_serial->writeBytes(_message_body.data(), _message_body.size());
