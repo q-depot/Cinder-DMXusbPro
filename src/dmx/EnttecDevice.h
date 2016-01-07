@@ -80,6 +80,7 @@ private:
 
 using EnttecDeviceRef = std::shared_ptr<EnttecDevice>;
 
+std::ostream& operator << (std::ostream &lhs, const EnttecDevice::Settings &rhs);
+
 } // namespace dmx
 
-std::ostream& operator << (std::ostream& os, const dmx::EnttecDevice::Settings& settings);
