@@ -17,18 +17,19 @@ using namespace dmx;
 namespace {
 
 const auto EnttecDeviceDummyBaudRate = 57600;
-const auto BodySize = size_t(512);
-const auto DataSize = BodySize + 1; // account for start code in message size
-const auto MessageHeader = std::array<uint8_t, 5> {
-	0x7E,  // Start of message
-	6,     // Output Only Send DMX Packet Request
-	(uint8_t)(DataSize & 0xFF),        // data length least significant byte
-	(uint8_t)((DataSize >> 8) & 0xFF), // data length most significant byte
-	0      // start code for data
-};
+const auto StartOfMessage = 0x7E;
+const auto EndOfMessage = 0xE7;
 
-const auto MessageFooter = std::array<uint8_t, 1> {
-	0xE7 // End of message
+enum MessageLabel {
+	GetWidgetParameters = 3,
+	SetWidgetParameters = 4,
+	ReceivedDMXPacket = 5,
+	OutputOnlySendDMXPacket = 6,
+	SendRMDPacket = 7,
+	ReceiveDMXOnChange = 8,
+	ReceivedDMXChangeOfStatePacket = 9,
+	GetWidgetSerialNumber = 10,
+	SendRDMDiscovery = 11
 };
 
 } // namespace
@@ -36,7 +37,7 @@ const auto MessageFooter = std::array<uint8_t, 1> {
 EnttecDevice::EnttecDevice(const std::string &device_name, int device_fps)
 {
 	_target_frame_time = std::chrono::milliseconds(1000 / device_fps);
-	_message_body.assign(BodySize, 0);
+	_message_body.assign(512, 0);
 	connect(device_name);
 }
 
@@ -116,9 +117,17 @@ void EnttecDevice::writeData()
 	std::lock_guard<std::mutex> lock(_data_mutex);
 
 	if (_serial) {
-		_serial->writeBytes(MessageHeader.data(), MessageHeader.size());
+		const auto data_size = _message_body.size() + 1; // account for data start code
+		const auto header = std::array<uint8_t, 5> {
+			StartOfMessage,  // Start of message
+			MessageLabel::OutputOnlySendDMXPacket,
+			(uint8_t)(data_size & 0xFF),        // data length least significant byte
+			(uint8_t)((data_size >> 8) & 0xFF), // data length most significant byte
+			0      // start code for data
+		};
+		_serial->writeBytes(header.data(), header.size());
 		_serial->writeBytes(_message_body.data(), _message_body.size());
-		_serial->writeBytes(MessageFooter.data(), MessageFooter.size());
+		_serial->writeByte(EndOfMessage);
 	}
 }
 
