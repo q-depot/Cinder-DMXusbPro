@@ -19,6 +19,7 @@ namespace {
 const auto EnttecDeviceDummyBaudRate = 57600;
 const auto StartOfMessage = 0x7E;
 const auto EndOfMessage = 0xE7;
+const auto DataStartCode = 0x00;
 
 enum MessageLabel {
 //	ReprogramFirmware = 1,
@@ -195,11 +196,11 @@ void EnttecDevice::writeData()
 	if (_serial) {
 		const auto data_size = _message_body.size() + 1; // account for data start code
 		const auto header = std::array<uint8_t, 5> {
-			StartOfMessage,  // Start of message
+			StartOfMessage,
 			MessageLabel::OutputOnlySendDMXPacket,
 			leastSignificantByte(data_size),
 			mostSignificantByte(data_size),
-			0x00      // start code for data
+			DataStartCode
 		};
 		_serial->writeBytes(header.data(), header.size());
 		_serial->writeBytes(_message_body.data(), _message_body.size());

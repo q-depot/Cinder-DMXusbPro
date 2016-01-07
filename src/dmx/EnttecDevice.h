@@ -34,9 +34,9 @@ public:
 
 	struct Settings {
 		int			firmware_number;
-		uint8_t break_time;            // [9, 127]
-		uint8_t mark_after_break_time; // [1, 127]
-		uint8_t device_fps;            // [0, 40]
+		uint8_t break_time;            // valid range [9, 127]
+		uint8_t mark_after_break_time; // valid range [1, 127]
+		uint8_t device_fps;            // valid range [0, 40]
 	};
 
 	/// Connect to a serial device. Returns true on successful connection.
