@@ -32,6 +32,13 @@ public:
 	EnttecDevice(const EnttecDevice&) = delete;
 	EnttecDevice& operator=(const EnttecDevice&) = delete;
 
+	struct Settings {
+		int			firmware_number;
+		uint8_t break_time;            // [9, 127]
+		uint8_t mark_after_break_time; // [1, 127]
+		uint8_t device_fps;            // [0, 40]
+	};
+
 	/// Connect to a serial device. Returns true on successful connection.
 	bool connect(const std::string &device_name);
 	bool isConnected() const { return _serial != nullptr; }
@@ -56,11 +63,12 @@ public:
 	void stopLoop();
 
 	/// Set the DMX hardware's framerate and the rate at which we send new data to the hardware.
-	void setFramerate(int device_fps);
+	void applySettings(const Settings &settings);
+	std::future<Settings> loadSettings() const;
 
 private:
 	std::vector<uint8_t>	_message_body;
-	std::mutex						_data_mutex;
+	mutable std::mutex		_data_mutex;
 	std::chrono::high_resolution_clock::duration _target_frame_time;
 	ci::SerialRef         _serial;
 	std::thread           _loop_thread;

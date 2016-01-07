@@ -21,6 +21,8 @@ const auto StartOfMessage = 0x7E;
 const auto EndOfMessage = 0xE7;
 
 enum MessageLabel {
+//	ReprogramFirmware = 1,
+//	ProgramFlashPage = 2,
 	GetWidgetParameters = 3,
 	SetWidgetParameters = 4,
 	ReceivedDMXPacket = 5,
@@ -38,6 +40,10 @@ uint8_t leastSignificantByte(int value) {
 
 uint8_t mostSignificantByte(int value) {
 	return (value >> 8) & 0xFF;
+}
+
+int combinedNumber(uint8_t lsb, uint8_t msb) {
+	return (msb << 8) + lsb;
 }
 
 } // namespace
@@ -120,22 +126,66 @@ void EnttecDevice::dataSendLoop()
 	CI_LOG_I("Exiting DMX loop.");
 }
 
-void EnttecDevice::setFramerate(int device_fps) {
+void EnttecDevice::applySettings(const dmx::EnttecDevice::Settings &settings) {
 	std::lock_guard<std::mutex> lock(_data_mutex);
 
 	const auto message = std::array<uint8_t, 8> {
 		StartOfMessage,
 		MessageLabel::SetWidgetParameters,
-		leastSignificantByte(0),
+		leastSignificantByte(0), // no user settings to pass through
 		mostSignificantByte(0),
-		9, // output break time [9, 127]
-		1, // output mark after break time [1, 127]
-		glm::clamp<uint8_t>(device_fps, 0, 40),
+		settings.break_time,
+		settings.mark_after_break_time,
+		settings.device_fps,
 		EndOfMessage
 	};
 
-	_target_frame_time = std::chrono::milliseconds(1000 / device_fps);
+	_target_frame_time = std::chrono::milliseconds(1000 / settings.device_fps);
 	_serial->writeBytes(message.data(), message.size());
+}
+
+std::future<EnttecDevice::Settings> EnttecDevice::loadSettings() const {
+	return std::async(std::launch::async, [this] () {
+		std::lock_guard<std::mutex> lock(_data_mutex);
+
+		const auto message = std::array<uint8_t, 5> {
+			StartOfMessage,
+			MessageLabel::GetWidgetParameters,
+			leastSignificantByte(0),
+			mostSignificantByte(0),
+			EndOfMessage
+		};
+
+		if (_serial) {
+			auto response = std::array<uint8_t, 8> {};
+			_serial->flush();
+			_serial->writeBytes(message.data(), message.size());
+			_serial->readBytes(response.data(), response.size());
+
+			CI_ASSERT(response[0] == StartOfMessage);
+			CI_ASSERT(response.back() == EndOfMessage);
+
+			auto response_type = response[1];
+			if (response_type == MessageLabel::GetWidgetParameters) {
+				auto firmware_number = combinedNumber(response[2], response[3]);
+				auto settings = Settings {
+					firmware_number,
+					response[4],
+					response[5],
+					response[6]
+				};
+				return settings;
+			}
+			else {
+				CI_LOG_E("Unexpected response from DMX device");
+				return Settings{ 0, 0, 0, 0 };
+			}
+
+		}
+		else {
+			return Settings{ 0, 0, 0, 0 };
+		}
+	});
 }
 
 void EnttecDevice::writeData()
