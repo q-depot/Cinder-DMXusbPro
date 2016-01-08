@@ -159,6 +159,7 @@ std::future<EnttecDevice::Settings> EnttecDevice::loadSettings() const {
 		if (_serial) {
 			auto response = std::array<uint8_t, 8> {};
 			_serial->writeBytes(message.data(), message.size());
+			// consider replacing with readStringUntil EndOfMessage.
 			_serial->readBytes(response.data(), response.size());
 
 			CI_ASSERT(response[0] == StartOfMessage);
