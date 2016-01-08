@@ -171,6 +171,10 @@ std::future<EnttecDevice::Settings> EnttecDevice::loadSettings() const {
 			auto message_start = string::npos;
 			while (! is_response_valid(response, message_start)) {
 				response = _serial->readStringUntil(EndOfMessage);
+				for (auto &c: response) {
+					console() << (uint8_t)c << ", ";
+				}
+				console() << endl;
 			}
 
 			CI_ASSERT((uint8_t)response[message_start] == StartOfMessage);
