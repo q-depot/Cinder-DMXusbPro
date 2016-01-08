@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <cinder>
 	<block
-		name="DMXUsbPro"
-		id="uk.nocte.dmxusbpro"
-		author="Andrea Cuius - Nocte Studio Ltd."
-		summary="Cinder Enttec DMX USB Pro library"
-		git="git@github.com:q-depot/Cinder-DMXusbPro.git"
+		name="Cinder-DMX"
+		id="com.sosolimited.cinderdmx"
+		author="Sosolimited"
+		summary="Serial communication for DMX control. Supports Enttec DMXPro devices."
+		git="git@github.com:sosolimited/Cinder-DMX.git"
 		>
-
-	    <sourcePattern>src/*.cpp</sourcePattern>
-	    <headerPattern>src/*.h</headerPattern>
-	    <includePath>src</includePath>
-	    
+		<sourcePattern>src/dmx/*.cpp</sourcePattern>
+		<headerPattern>src/dmx/*.h</headerPattern>
+		<includePath>src</includePath>
+		<license>MIT</license>
 	</block>
 </cinder>
