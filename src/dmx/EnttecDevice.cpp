@@ -70,6 +70,7 @@ void EnttecDevice::closeConnection() {
 	stopLoop();
 
 	if (_serial) {
+		std::lock_guard<std::mutex> lock(_data_mutex);
 		CI_LOG_I("Shutting down serial connection: " << _serial->getDevice().getPath());
 		_serial->flush();
 		_serial.reset();
@@ -94,6 +95,8 @@ bool EnttecDevice::connect(const std::string &device_name)
 
 	try
 	{
+		std::lock_guard<std::mutex> lock(_data_mutex);
+
 		const Serial::Device dev = Serial::findDeviceByNameContains(device_name);
 		_serial = Serial::create(dev, EnttecDeviceDummyBaudRate);
 		_serial->flush();
@@ -107,7 +110,6 @@ bool EnttecDevice::connect(const std::string &device_name)
 	catch(const std::exception &exc)
 	{
 		CI_LOG_E("Error initializing DMX device: " << exc.what());
-		CI_ASSERT(_serial == nullptr);
 		return false;
 	}
 }
@@ -191,8 +193,6 @@ std::future<EnttecDevice::Settings> EnttecDevice::loadSettings() const {
 			const auto break_time_index = message_body_start + 2;
 			const auto mark_after_break_time_index = message_body_start + 3;
 			const auto device_fps_index = message_body_start + 4;
-			CI_ASSERT(response[0] == StartOfMessage);
-			CI_ASSERT(response.back() == EndOfMessage);
 
 			auto firmware_number = combinedNumber(response[firmware_index_lsb], response[firmware_index_msb]);
 			auto settings = Settings {
