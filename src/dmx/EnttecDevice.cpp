@@ -16,7 +16,7 @@ using namespace dmx;
 
 namespace {
 
-const auto EnttecDeviceDummyBaudRate = 57600;
+const auto EnttecDeviceDummyBaudRate = 56000;
 const auto StartOfMessage = 0x7E;
 const auto EndOfMessage = 0xE7;
 const auto DataStartCode = 0x00;
@@ -97,12 +97,11 @@ bool EnttecDevice::connect(const std::string &device_name)
 		const Serial::Device dev = Serial::findDeviceByNameContains(device_name);
 		_serial = Serial::create(dev, EnttecDeviceDummyBaudRate);
 		_serial->flush();
-        auto old_stuff = std::vector<uint8_t>();
-        old_stuff.resize(_serial->getNumBytesAvailable());
-        _serial->readAvailableBytes(old_stuff.data(), old_stuff.size());
-        for (auto &c: old_stuff) {
-            console() << "Draining: " << (int)c << endl;
-        }
+
+		// Drain serial.
+		auto old_stuff = std::vector<uint8_t>();
+		old_stuff.resize(_serial->getNumBytesAvailable());
+		_serial->readAvailableBytes(old_stuff.data(), old_stuff.size());
 		return true;
 	}
 	catch(const std::exception &exc)
@@ -162,36 +161,45 @@ std::future<EnttecDevice::Settings> EnttecDevice::loadSettings() const {
 			EndOfMessage
 		};
 
-		const auto is_response_valid = [] (const std::string &response, size_t message_start) {
-			auto has_start = (message_start != string::npos);
-			auto contains_enough_data = (response.size() - message_start) > 6;
-			auto type = (uint8_t)response[message_start + 1];
-
-			return has_start && contains_enough_data && (type == MessageLabel::GetWidgetParameters);
-		};
-
 		if (_serial) {
 			_serial->writeBytes(message.data(), message.size());
 
-			auto response = std::string("");
-			auto message_start = string::npos;
-			while (! is_response_valid(response, message_start)) {
-				response = _serial->readStringUntil(EndOfMessage);
-				for (auto &c: response) {
-					console() << (uint8_t)c << ", ";
+			auto response = std::vector<uint8_t>();
+			auto response_is_valid = [&response] {
+				if (! response.empty()) {
+					return response.back() == EndOfMessage;
 				}
-				console() << endl;
+				return false;
+			};
+
+			while (! response_is_valid()) {
+				auto byte = _serial->readByte();
+				if (byte == StartOfMessage) {
+					response = { byte };
+				}
+				else {
+					response.push_back(byte);
+				}
+
+				CI_LOG_D((int)byte);
 			}
 
-			CI_ASSERT((uint8_t)response[message_start] == StartOfMessage);
-			CI_ASSERT((uint8_t)response.back() == EndOfMessage);
+			const auto message_body_start = 4; // start, type, data lsb, data msb
+			// skip two bytes (lsb, msb of message size)
+			const auto firmware_index_lsb = message_body_start;
+			const auto firmware_index_msb = message_body_start + 1;
+			const auto break_time_index = message_body_start + 2;
+			const auto mark_after_break_time_index = message_body_start + 3;
+			const auto device_fps_index = message_body_start + 4;
+			CI_ASSERT(response[0] == StartOfMessage);
+			CI_ASSERT(response.back() == EndOfMessage);
 
-			auto firmware_number = combinedNumber(response[message_start + 2], response[message_start + 3]);
+			auto firmware_number = combinedNumber(response[firmware_index_lsb], response[firmware_index_msb]);
 			auto settings = Settings {
 				firmware_number,
-				(uint8_t)response[message_start + 4],
-				(uint8_t)response[message_start + 5],
-				(uint8_t)response[message_start + 6]
+				response[break_time_index],
+				response[mark_after_break_time_index],
+				response[device_fps_index]
 			};
 			return settings;
 		}
