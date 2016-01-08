@@ -35,8 +35,8 @@ void DMXBasicApp::setup()
 	// Start sending data to device on an interval in a secondary thread.
 	_device->startLoop();
 
-	// As of now, it is unclear whether applying the settings works as expected.
-//    _settings.device_fps = 30;
+	// As of now, applying the settings does not work as expected.
+//    _settings.device_fps = 40;
 //    _device->applySettings(_settings);
 
 	CI_ASSERT(_buffer.lastColorIndex() == 507);
