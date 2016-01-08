@@ -156,32 +156,37 @@ std::future<EnttecDevice::Settings> EnttecDevice::loadSettings() const {
 			EndOfMessage
 		};
 
+		const auto is_response_valid = [] (const std::string &response, size_t message_start) {
+			auto has_start = (message_start != string::npos);
+			auto contains_enough_data = (response.size() - message_start) > 6;
+			auto type = (uint8_t)response[message_start + 1];
+
+			return has_start && contains_enough_data && (type == MessageLabel::GetWidgetParameters);
+		};
+
 		if (_serial) {
-			auto response = std::array<uint8_t, 8> {};
 			_serial->writeBytes(message.data(), message.size());
-			// consider replacing with readStringUntil EndOfMessage.
-			_serial->readBytes(response.data(), response.size());
 
-			CI_ASSERT(response[0] == StartOfMessage);
-
-			auto response_type = response[1];
-			if (response_type == MessageLabel::GetWidgetParameters) {
-				auto firmware_number = combinedNumber(response[2], response[3]);
-				auto settings = Settings {
-					firmware_number,
-					response[4],
-					response[5],
-					response[6]
-				};
-				return settings;
-			}
-			else {
-				CI_LOG_E("Unexpected response from DMX device");
-				return Settings{ 0, 0, 0, 0 };
+			auto response = std::string("");
+			auto message_start = string::npos;
+			while (! is_response_valid(response, message_start)) {
+				response = _serial->readStringUntil(EndOfMessage);
 			}
 
+			CI_ASSERT((uint8_t)response[message_start] == StartOfMessage);
+			CI_ASSERT((uint8_t)response.back() == EndOfMessage);
+
+			auto firmware_number = combinedNumber(response[message_start + 2], response[message_start + 3]);
+			auto settings = Settings {
+				firmware_number,
+				(uint8_t)response[message_start + 4],
+				(uint8_t)response[message_start + 5],
+				(uint8_t)response[message_start + 6]
+			};
+			return settings;
 		}
 		else {
+			CI_LOG_W("Not connected via serial, returning empty settings.");
 			return Settings{ 0, 0, 0, 0 };
 		}
 	});
