@@ -97,6 +97,12 @@ bool EnttecDevice::connect(const std::string &device_name)
 		const Serial::Device dev = Serial::findDeviceByNameContains(device_name);
 		_serial = Serial::create(dev, EnttecDeviceDummyBaudRate);
 		_serial->flush();
+        auto old_stuff = std::vector<uint8_t>();
+        old_stuff.resize(_serial->getNumBytesAvailable());
+        _serial->readAvailableBytes(old_stuff.data(), old_stuff.size());
+        for (auto &c: old_stuff) {
+            console() << "Draining: " << (int)c << endl;
+        }
 		return true;
 	}
 	catch(const std::exception &exc)
