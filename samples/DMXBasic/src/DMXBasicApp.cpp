@@ -28,7 +28,10 @@ void DMXBasicApp::setup()
 	}
 	// Connect to enttec device and run data loop at 30 fps.
 	_device = std::make_shared<dmx::EnttecDevice>("tty.usbserial-EN", 30);
+
 	// Load the device settings synchronously.
+	// This sometimes stalls while waiting for a response from the DMX box.
+	// Will eventually add a timeout to the serial read and throw an exception on failure.
 	_settings = _device->loadSettings().get();
 	console() << _settings << endl;
 
