@@ -38,14 +38,16 @@ void DMXBasicApp::setup()
 	// As of now, it is unclear whether applying the settings works as expected.
 //    _settings.device_fps = 30;
 //    _device->applySettings(_settings);
+
+	CI_ASSERT(_buffer.lastColorIndex() == 507);
 }
 
 void DMXBasicApp::update()
 {
-	auto t = fract(getElapsedSeconds());
-	for (auto c = 0; c <= 512 - 3; c += 3) {
-		auto hue = fract(t + (c / 512.0f));
-		auto color = Color(CM_HSV, hue, 0.5, 0.5);
+	auto t = fract(getElapsedSeconds() * 0.5);
+	for (auto c = 0; c <= _buffer.lastColorIndex(); c += 3) {
+		auto hue = fract(t + (c / 2048.0f));
+		auto color = Color(CM_HSV, hue, 0.8, 0.3);
 		_buffer.setChannelValues(c, color);
 	}
 
@@ -56,6 +58,18 @@ void DMXBasicApp::update()
 void DMXBasicApp::draw()
 {
 	gl::clear( Color( 0, 0, 0 ) );
+	auto pos = vec2(10.0f, 10.0f);
+	// retrieve RGB triples from buffer.
+	for (auto i = 0; i <= _buffer.lastColorIndex(); i += 3) {
+		auto color = *reinterpret_cast<const Color8u*>(&_buffer.data()[i]);
+		gl::color(color);
+		gl::drawSolidCircle(pos, 8.0f);
+		pos.x += 24.0f;
+		if (pos.x > getWindowWidth() - 10.0f) {
+			pos.y += 32.0f;
+			pos.x = 10.0f;
+		}
+	}
 }
 
 CINDER_APP( DMXBasicApp, RendererGl )

@@ -23,6 +23,10 @@ public:
 
 	const uint8_t* data() const { return _data.data(); }
 	size_t         size() const { return _data.size(); }
+	/// Returns the last safe index for assignment of data occupying \step bytes.
+	size_t         safeIndex(size_t step) const { return std::floor<size_t>(_data.size() / (double)step) * step - step; }
+	/// Returns the last usable contiguous color index.
+	size_t         lastColorIndex() const { return safeIndex(3); }
 
 private:
 	std::array<uint8_t, 512> _data;
