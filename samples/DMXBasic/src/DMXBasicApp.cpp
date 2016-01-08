@@ -32,8 +32,8 @@ void DMXBasicApp::setup()
 	// Load the device settings synchronously.
 	// This sometimes stalls while waiting for a response from the DMX box.
 	// Will eventually add a timeout to the serial read and throw an exception on failure.
-	_settings = _device->loadSettings().get();
-	console() << _settings << endl;
+//	_settings = _device->loadSettings().get();
+//	console() << _settings << endl;
 
 	// Start sending data to device on an interval in a secondary thread.
 	_device->startLoop();
