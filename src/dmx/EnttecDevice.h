@@ -45,7 +45,7 @@ public:
 	/// Disconnect from serial device.
 	void closeConnection();
 
-	/// Send data to DMX device. Called repeatedly from a separate thread. Threadsafe.
+	/// Send data to DMX device. Called repeatedly from a separate thread after startLoop() is called. Threadsafe.
 	void writeData();
 
 	/// Buffer all message data to be sent on the next DMX update. Threadsafe.
@@ -57,7 +57,7 @@ public:
 
 	/// Return the name of the connected device. If not connected, returns an empty string.
 	std::string  getDeviceName() { return _serial ? _serial->getDevice().getName() : ""; }
-	/// Start update loop (called automatically by connect).
+	/// Start update loop.
 	void startLoop();
 	/// Stop update loop.
 	void stopLoop();

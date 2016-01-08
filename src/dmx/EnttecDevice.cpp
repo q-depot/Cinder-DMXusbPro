@@ -96,8 +96,7 @@ bool EnttecDevice::connect(const std::string &device_name)
 	{
 		const Serial::Device dev = Serial::findDeviceByNameContains(device_name);
 		_serial = Serial::create(dev, EnttecDeviceDummyBaudRate);
-        _serial->flush();
-		startLoop();
+		_serial->flush();
 		return true;
 	}
 	catch(const std::exception &exc)

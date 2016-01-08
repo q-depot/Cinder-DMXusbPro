@@ -33,6 +33,8 @@ void DMXBasicApp::setup()
 	console() << _settings << endl;
 
     // As of now, it is unclear whether applying the settings works as expected.
+	// Start sending data to device on an interval in a secondary thread.
+	_device->startLoop();
 //    _settings.device_fps = 30;
 //    _device->applySettings(_settings);
 }
