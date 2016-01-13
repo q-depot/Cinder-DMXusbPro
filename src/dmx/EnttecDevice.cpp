@@ -187,7 +187,7 @@ std::future<EnttecDevice::Settings> EnttecDevice::loadSettings() const {
 			}
 
 			const auto message_body_start = 4; // start, type, data lsb, data msb
-			// skip two bytes (lsb, msb of message size)
+			// skip two bytes (lsb, msb of message size, it seems)
 			const auto firmware_index_lsb = message_body_start;
 			const auto firmware_index_msb = message_body_start + 1;
 			const auto break_time_index = message_body_start + 2;
@@ -215,6 +215,9 @@ void EnttecDevice::writeData()
 	std::lock_guard<std::mutex> lock(_data_mutex);
 
 	if (_serial) {
+		// May need to include 2 or 3 more bytes in data size so it represents complete message size. (label, lsb, msb)
+		// The documentation suggests otherwise, but the Mk2 sends back undocumented bytes when querying settings.
+		// If we seem to be missing the last handful of channels of data when testing the full 512 channels, this could be why.
 		const auto data_size = _message_body.size() + 1; // account for data start code
 		const auto header = std::array<uint8_t, 5> {
 			StartOfMessage,
