@@ -6,11 +6,19 @@ Based on the MIT-licensed [Cinder-DMXUsbPro](https://github.com/q-depot/Cinder-D
 
 ## What it does
 
-The Enttec device receives commands over serial and translates them into a stream of DMX commands for your lighting hardware.
+The Enttec hardware receives commands over serial and translates them into a stream of DMX commands for your lighting hardware.
 
-This library simplifies connecting to and sending commands to the Enttec device. Regular DMX packet delivery is handled on a secondary thread, with a threadsafe `bufferData` method for providing complete information packets. Querying and setting the DMX hardware’s basic parameters is also supported.
+This library eases connecting to and sending commands to the Enttec hardware.
 
-Have a look at the DMXBasicApp sample to get an idea for how to use the block.
+Using the block requires three steps:
+
+1. Connect to a physical device by constructing a `dmx::EnttecDevice`.
+2. Start the virtual device’s data loop `device->startLoop()`.
+3. Pass buffers of data to your virtual device `device->bufferData(buffer)`.
+
+Have a look at the DMXBasicApp sample to see these commands in context. Note that it will run even if you aren’t able to connect to a device.
+
+Serial message delivery is handled on a secondary thread, with the `bufferData` method providing a threadsafe interface to update the data sent to the DMX controller. Querying the DMX hardware’s basic parameters is also supported (though responses from the device occasionally stall). We can attempt to set the hardware’s parameters, but sending a message matching the device documentation doesn’t appear to work. We may try adjusting that message in the future.
 
 ## What is DMX
 
