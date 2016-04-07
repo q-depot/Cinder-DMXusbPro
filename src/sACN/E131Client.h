@@ -25,20 +25,21 @@ public:
 
   void setUseFramerate(bool iEnable) { useFramerate = iEnable; }
 
+  void setPriority(int priority);
+  void setCid(const std::vector<char> cid);
+  void setSourceName(std::string name);
+
 private:
   void connectUDP();
-
   void sendDMX();
   void setUniverse(int universe);
-  void setPriority(int priority);
-  void setCid();
-  void setSourceName(std::string name);
-  void setLength();
+  void setLengthFlags();
 
   bool shouldSendData(float iTimeSinceDataSent);
 
   // BIG ENDIAN
   char sac_packet[638] = {
+      // ROOT LAYER (RLP)
       0x00, 0x10,                   // Define RLP Preamble Size
       0x00, 0x00,                   // RLP Post amble size
       0x41, 0x53, 0x43, 0x2d, 0x45, // E131 Packet identifier
@@ -76,11 +77,11 @@ private:
       0x00, 0x01, // Indicates each property is 1 octet / byte
       0x02, 0x01, // Indicates 1+the number of slots in packet
       0x00,       // DMX start code (0 is standard)
-      char(512)   // payload
+      char(512)   // DMX payload (all 512 channels)
   };
 
-  int packet_length = 638;
-  int destPort = 5568; // Default for sACN
+  int packet_length = 638; // Length when all 512 DMX channels are sent
+  int destPort = 5568;     // Default port for sACN protocol!
   int priority = 100;
 
   // Framerate-lock sending or send as fast as we can
@@ -98,10 +99,9 @@ private:
   bool udpSetup = false;
 
   std::string ipAddress;
-
-  //  std::shared_ptr<asio::io_service> _service;
   std::shared_ptr<asio::ip::udp::socket> _socket;
 
-  char sequenceNum = 0;
+  int _universe = 1;
+  std::map<int, char> universeSequenceNum;
 };
 }

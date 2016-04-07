@@ -1,4 +1,5 @@
 #include "E131Client.h"
+#include "cinder/Log.h"
 #include "cinder/app/App.h"
 
 using namespace soso;
@@ -11,9 +12,15 @@ E131Client::E131Client(string ipAddress) : ipAddress(ipAddress) {
     sac_packet[125 + i] = 0x00;
   }
 
+  // Universally Unique Identifier generated at:  https://www.uuidgenerator.net/
+  const vector<char> cid = {char(0x71), char(0x2d), char(0xfb), char(0x4c),
+                            char(0xe6), char(0xa3), char(0x4f), char(0xeb),
+                            char(0xaa), char(0x99), char(0xe5), char(0x94),
+                            char(0x84), char(0xb4), char(0x5b), char(0x1d)};
+
   setSourceName("Sosolimited device");
-  setCid();
-  setLength();
+  setCid(cid);
+  setLengthFlags();
   setPriority(200); // Default top priority
   setUniverse(1);
 
@@ -25,6 +32,7 @@ E131Client::E131Client(string ipAddress) : ipAddress(ipAddress) {
   // Create a timer for timing cycling and data sending
   timer = clock();
 
+  // Connect to UDP endpoint
   connectUDP();
 }
 
@@ -42,10 +50,10 @@ void E131Client::connectUDP() {
     _socket->connect(endpoint, errCode);
 
     if (!errCode) {
-      cout << "Connected to socket!" << endl;
+      CI_LOG_I("Connected to socket!");
       udpSetup = true;
     } else {
-      cout << "Error connceting to socket, error code: " << errCode << endl;
+      CI_LOG_E("Error connceting to socket, error code: " << errCode);
     }
   }
 }
@@ -54,19 +62,21 @@ void E131Client::setChannel(int channel, int value, int universe) {
 
   setUniverse(universe);
 
-  // Cast value to char
-  char val = char(value);
-
   if ((channel > 0) && (channel < 512)) {
-
-    sac_packet[126 + channel] = val;
+    sac_packet[126 + channel] = char(value);
 
   } else {
-    // bad
+    CI_LOG_E("Channel must be between 1 and 512 for DMX protocol.");
   }
 }
 
 void E131Client::setUniverse(int universe) {
+
+  _universe = universe;
+
+  if (universeSequenceNum.count(_universe) == 0) {
+    universeSequenceNum[_universe] = 0;
+  }
 
   // Set header with appropriate universe, high and low byte
   sac_packet[113] = universe >> 8;
@@ -75,34 +85,27 @@ void E131Client::setUniverse(int universe) {
 
 void E131Client::setPriority(int priority) {
 
-  if ((priority > 0) && (priority <= 200)) {
+  if ((priority >= 0) && (priority <= 200)) {
     sac_packet[108] = char(priority);
   } else {
-    cout << "Priority must be between 1-200" << endl;
+    CI_LOG_W("Priority must be between 0-200");
   }
 }
 
 // This should remain the same per physical device
-void E131Client::setCid() {
+void E131Client::setCid(const std::vector<char> cid) {
 
-  // https://www.uuidgenerator.net/
-  // 71 2d fb 4c-e6 a3-4f eb-aa 99-e5 94 84 b4 5b 1d
-  sac_packet[22] = 0x71;
-  sac_packet[23] = 0x2d;
-  sac_packet[24] = 0xfb;
-  sac_packet[25] = 0x4c;
-  sac_packet[26] = 0xe6;
-  sac_packet[27] = 0xa3;
-  sac_packet[28] = 0x4f;
-  sac_packet[29] = 0xeb;
-  sac_packet[30] = 0xaa;
-  sac_packet[31] = 0x99;
-  sac_packet[32] = 0xe5;
-  sac_packet[33] = 0x94;
-  sac_packet[34] = 0x84;
-  sac_packet[35] = 0xb4;
-  sac_packet[36] = 0x5b;
-  sac_packet[37] = 0x1d;
+  int length = cid.size();
+
+  if (length != 16) {
+    CI_LOG_W("CID must be of length 16!");
+    return;
+  }
+
+  int start_index = 22;
+  for (int i = 0; i < 16; i++) {
+    sac_packet[start_index + i] = cid[i];
+  }
 }
 
 // UTF-8 encoded string, null terminated
@@ -113,7 +116,7 @@ void E131Client::setSourceName(std::string name) {
 
   int max_length = strlen(cstr);
 
-  // field is 64 bytes, with a null terminator
+  // Field is 64 bytes, with a null terminator
   if (max_length > 63) {
     max_length = 63;
   };
@@ -124,7 +127,7 @@ void E131Client::setSourceName(std::string name) {
   sac_packet[107] = '\n';
 }
 
-void E131Client::setLength() {
+void E131Client::setLengthFlags() {
 
   // 16-bit field with the PDU (Protocol Data Unit) length
   // encoded in the lower 12 bits
@@ -177,13 +180,11 @@ bool E131Client::shouldSendData(float iTime) {
 
   if (!useFramerate) {
     return true;
-
   } else {
 
     float diff = iTime - lastDataSendTime;
 
     if ((diff >= dataSendInterval) && (framerate > 0)) {
-
       return true;
     }
   }
@@ -192,9 +193,10 @@ bool E131Client::shouldSendData(float iTime) {
 
 void E131Client::sendDMX() {
 
-  //	s.send_to(asio::buffer(request, request_length), endpoint);
-
   _socket->send(asio::buffer(sac_packet, packet_length));
+  universeSequenceNum[_universe] = universeSequenceNum[_universe] + 1;
+
+  // Increment current universe counter.
 }
 
 // Update all strands, send data if it's time
@@ -214,9 +216,9 @@ void E131Client::update() {
   if (autoSendingEnabled && shouldSendData(iTime)) {
     lastDataSendTime = iTime;
     sendDMX();
+
+    sac_packet[111] = universeSequenceNum[_universe];
   }
 
-  sequenceNum++;
-  sac_packet[111] = sequenceNum;
   timer = clock();
 }
