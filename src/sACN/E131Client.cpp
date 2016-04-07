@@ -154,7 +154,7 @@ void E131Client::setLengthFlags() {
 
   // Set length for Framing Layer
   sac_packet[38] = highByte;
-  sac_packet[39] = 0x58; // different length!
+  sac_packet[39] = lowByte; // different length!
 
   val = 0x020B;                       // Index 637-114 = 523 (0x020B)
   lowByte = 0xff & val;               // Get the lower byte
@@ -162,7 +162,7 @@ void E131Client::setLengthFlags() {
 
   // Set length for DMP Layer
   sac_packet[115] = highByte;
-  sac_packet[116] = 0xb;
+  sac_packet[116] = lowByte;
 }
 
 // Set our data sending framerate
