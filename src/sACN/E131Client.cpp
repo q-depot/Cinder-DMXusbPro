@@ -2,7 +2,7 @@
 #include "cinder/Log.h"
 #include "cinder/app/App.h"
 
-using namespace soso;
+using namespace dmx;
 using namespace std;
 using asio::ip::udp;
 

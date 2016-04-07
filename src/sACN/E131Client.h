@@ -9,7 +9,7 @@
 
 #include "asio/asio.hpp"
 
-namespace soso {
+namespace dmx {
 
 class E131Client {
 public:
