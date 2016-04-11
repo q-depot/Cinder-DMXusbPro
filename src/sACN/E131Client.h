@@ -28,6 +28,7 @@ public:
   void setPriority(int priority);
   void setCid(const std::vector<char> cid);
   void setSourceName(std::string name);
+	bool isConnected(){ return _isConnected; }
 
 private:
   void connectUDP();
@@ -91,6 +92,8 @@ private:
   float dataSendInterval = 0;
   float lastDataSendTime = 0;
   float framerate = 30.0f;
+
+  bool _isConnected = false;
 
   float timeSinceDataSent = 0;
   clock_t timer;

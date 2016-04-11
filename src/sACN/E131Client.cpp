@@ -41,19 +41,27 @@ void E131Client::connectUDP() {
   if (!udpSetup) {
 
     auto app = cinder::app::AppBase::get();
-    auto asioAddress = asio::ip::address_v4::from_string(ipAddress.c_str());
-    auto endpoint = udp::endpoint(asioAddress, destPort);
 
-    asio::error_code errCode;
+    try {
+      auto asioAddress = asio::ip::address_v4::from_string(ipAddress.c_str());
+      auto endpoint = udp::endpoint(asioAddress, destPort);
 
-    _socket = make_shared<udp::socket>(app->io_service());
-    _socket->connect(endpoint, errCode);
+      asio::error_code errCode;
 
-    if (!errCode) {
-      CI_LOG_I("Connected to socket!");
-      udpSetup = true;
-    } else {
-      CI_LOG_E("Error connceting to socket, error code: " << errCode);
+      _socket = make_shared<udp::socket>(app->io_service());
+      _socket->connect(endpoint, errCode);
+
+      if (!errCode) {
+        CI_LOG_I("Connected to socket!");
+        udpSetup = true;
+        _isConnected = true;
+      } else {
+        CI_LOG_E("Error connceting to socket, error code: " << errCode);
+      }
+
+    } catch (std::exception &e) {
+
+      CI_LOG_E("Exception resolving endpoint " + ipAddress);
     }
   }
 }
