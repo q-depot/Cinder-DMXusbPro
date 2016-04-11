@@ -41,27 +41,6 @@ KinetPowerSupply::KinetPowerSupply(std::string ipAddress)
 
 KinetPowerSupply::~KinetPowerSupply() {}
 
-//// Set up udp manager to send kinet packets
-//// TODO: We may not need to bind to a port, since
-//// we're not listening for data (only sending)
-// void KinetPowerSupply::connectUDP() {
-//
-//  if (udpSetup) {
-//    udpManager->Close();
-//    udpSetup = false;
-//  }
-//
-//  udpManager->Create();
-//  udpManager->SetReuseAddress(true);
-//  udpManager->Bind(baseAddress); // TODO: This may be unnecessary. Double
-//  check.
-//  udpManager->SetNonBlocking(true);
-//  udpManager->SetEnableBroadcast(true);
-//  udpSetup = udpManager->Connect(ipAddress.c_str(), (int)destPort);
-//
-//  cout << "UDP setup is " << udpSetup << endl;
-//}
-
 void KinetPowerSupply::connectUDP() {
 
   if (!udpSetup) {
