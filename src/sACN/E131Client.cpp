@@ -8,10 +8,6 @@ using asio::ip::udp;
 
 E131Client::E131Client(string ipAddress) : ipAddress(ipAddress) {
 
-  for (int i = 0; i < 512; i++) {
-    sac_packet[125 + i] = 0x00;
-  }
-
   // Universally Unique Identifier generated at:  https://www.uuidgenerator.net/
   const vector<char> cid = {char(0x71), char(0x2d), char(0xfb), char(0x4c),
                             char(0xe6), char(0xa3), char(0x4f), char(0xeb),
@@ -71,7 +67,8 @@ void E131Client::setChannel(int channel, int value, int universe) {
   setUniverse(universe);
 
   if ((channel > 0) && (channel < 512)) {
-    sac_packet[126 + channel] = char(value);
+
+    sac_packet.at(126 + channel) = char(value);
 
   } else {
     CI_LOG_E("Channel must be between 1 and 512 for DMX protocol.");
@@ -87,14 +84,20 @@ void E131Client::setUniverse(int universe) {
   }
 
   // Set header with appropriate universe, high and low byte
-  sac_packet[113] = universe >> 8;
-  sac_packet[114] = universe;
+  try {
+    sac_packet.at(113) = universe >> 8;
+    sac_packet.at(114) = universe;
+  } catch (std::exception &e) {
+    cout << "set universe" << endl;
+  }
 }
 
 void E131Client::setPriority(int priority) {
 
   if ((priority >= 0) && (priority <= 200)) {
-    sac_packet[108] = char(priority);
+
+    sac_packet.at(108) = char(priority);
+
   } else {
     CI_LOG_W("Priority must be between 0-200");
   }
@@ -112,7 +115,8 @@ void E131Client::setCid(const std::vector<char> cid) {
 
   int start_index = 22;
   for (int i = 0; i < 16; i++) {
-    sac_packet[start_index + i] = cid[i];
+
+    sac_packet.at(start_index + i) = cid[i];
   }
 }
 
@@ -130,9 +134,9 @@ void E131Client::setSourceName(std::string name) {
   };
 
   for (int i = 0; i < max_length; i++) {
-    sac_packet[44 + i] = cstr[i];
+    sac_packet.at(44 + i) = cstr[i];
   }
-  sac_packet[107] = '\n';
+  sac_packet.at(107) = '\n';
 }
 
 void E131Client::setLengthFlags() {
@@ -153,24 +157,26 @@ void E131Client::setLengthFlags() {
       (0x7 << 4) | (val >> 8); // bitshift so 0x7 is in the top 4 bits
 
   // Set length for Root Layer (RLP)
-  sac_packet[16] = highByte;
-  sac_packet[17] = lowByte;
+
+  sac_packet.at(16) = highByte;
+  sac_packet.at(17) = lowByte;
 
   val = 0x0258;                       // Index 637-37 = 600 (0x0258)
   lowByte = 0xff & val;               // Get the lower byte
   highByte = (0x7 << 4) | (val >> 8); // bitshift so 0x7 is in the top 4 bits
 
   // Set length for Framing Layer
-  sac_packet[38] = highByte;
-  sac_packet[39] = lowByte; // different length!
+
+  sac_packet.at(38) = highByte;
+  sac_packet.at(39) = lowByte; // different length!
 
   val = 0x020B;                       // Index 637-114 = 523 (0x020B)
   lowByte = 0xff & val;               // Get the lower byte
   highByte = (0x7 << 4) | (val >> 8); // bitshift so 0x7 is in the top 4 bits
 
   // Set length for DMP Layer
-  sac_packet[115] = highByte;
-  sac_packet[116] = lowByte;
+  sac_packet.at(115) = highByte;
+  sac_packet.at(116) = lowByte;
 }
 
 // Set our data sending framerate
@@ -202,7 +208,7 @@ bool E131Client::shouldSendData(float iTime) {
 void E131Client::sendDMX() {
 
   _socket->send(asio::buffer(sac_packet, packet_length));
-  universeSequenceNum[_universe] = universeSequenceNum[_universe] + 1;
+  universeSequenceNum.at(_universe) = universeSequenceNum.at(_universe) + 1;
 
   // Increment current universe counter.
 }
@@ -225,7 +231,7 @@ void E131Client::update() {
     lastDataSendTime = iTime;
     sendDMX();
 
-    sac_packet[111] = universeSequenceNum[_universe];
+    sac_packet.at(111) = universeSequenceNum.at(_universe);
   }
 
   timer = clock();
