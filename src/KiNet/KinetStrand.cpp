@@ -117,6 +117,12 @@ void KinetStrand::sendKinet() {
 // THIS IS 0-indexed!
 shared_ptr<KinetLight> KinetStrand::addLight(int iIndex) {
 
+  auto existingLight = getLight(iIndex);
+
+  if (existingLight) {
+    return existingLight;
+  }
+
   try {
     if ((iIndex < 0) || (iIndex > 59)) {
       throw range_error(
