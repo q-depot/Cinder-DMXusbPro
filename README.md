@@ -21,14 +21,16 @@ If you are curious about what is leaving the DMX serial box, read up a bit on [D
 ### KiNet v2
 
 The KiNet v2 protocol is essentially a DMX array underneath an internet protocol and a Philips-specific header containing KiNet port and version information. It is used in conjunction with their newer lightning control hardware.
+
 Power supply models we have used that accept KiNet v2 :
-[sPDS-480](https://www.colorkinetics.com/support/datasheets/sPDS-480ca_ProductGuide.pdf)
-[sPDS-60ca](https://www.colorkinetics.com/support/datasheets/sPDS60ca_24v_ProductGuide.pdf)
+	[sPDS-480](https://www.colorkinetics.com/support/datasheets/sPDS-480ca_ProductGuide.pdf)
+	[sPDS-60ca](https://www.colorkinetics.com/support/datasheets/sPDS60ca_24v_ProductGuide.pdf)
 
-## KiNet v1
+### KiNet v1
 The KiNet v1 protocol is the same as KiNet v2 with a slightly different header. This Philips protocol to communicate to older power supplies.
-Power supply models we have used that accept KiNet v1 :
-[PDS-70mr 24V power supply](https://www.colorkinetics.com/ls/pds/pds70mr/)
 
-## Streaming ACN
-sACN (architecture for control networks) is a standard for controlling entertainment equipment, such as lighting, over an IP protocol. It is essentially a DMX frame wrapped in an ACN-specific header. There is a wealth of documentation of sACN. To learn more about it, visit [this page](https://www.rdmprotocol.org/files/What_Comes_After_Streaming_DMX_over_ACN_%20(4).pdf)
+Power supply models we have used that accept KiNet v1 :
+	[PDS-70mr 24V power supply](https://www.colorkinetics.com/ls/pds/pds70mr/)
+
+### Streaming ACN
+sACN (architecture for control networks) is a standard for controlling entertainment equipment, such as lighting, over an IP protocol. It is essentially a DMX frame wrapped in an ACN-specific header. There is a wealth of documentation of sACN. To learn more about it, visit [this page](https://www.rdmprotocol.org/files/What_Comes_After_Streaming_DMX_over_ACN_%20(4).pdf).
