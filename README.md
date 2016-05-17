@@ -1,77 +1,39 @@
-#Cinder-DMXUsbPro
-CinderBlock for the [Enttec DMX USB Pro](https://www.enttec.com/?main_menu=Products&pn=70304)
+# Cinder-DMX
 
-##Get the code
-```
-cd CINDER_PATH/blocks  
-git clone git@github.com:q-depot/Cinder-DMXusbPro.git
-```
+A library for sending DMX to various devices in Cinder. The scenarios of light command from Cinder this block supports are as follows:
 
-##How to use it
+### DMX communication over USB serial with Enttec USB Pro.
+The Enttec hardware receives commands over serial and translates them into a stream of DMX commands for your lighting hardware.
 
-* DMX channel starts from 0
-* Values range is 0-255 (1 byte per channel)
-
-__DMXPro runs a thread in the background to send the data at 35fps.__  
-DMX is __not realiable__ with higher frame rates, I recommend not to change this value.
+	 Using the block requires three steps:
 
 
-```C++
-#include "DMXPro.h"
+   1. Connect to a physical device by constructing a `dmx::EnttecDevice`.
+   2. Start the virtual device’s data loop `device->startLoop()`.
+   3. Pass buffers of data to your virtual device `device->bufferData(buffer)`.
 
-DMXProRef	mDmxController;
+Have a look at the DMXBasicApp sample to see these commands in context. Note that it will run even if you aren’t able to connect to a device.
 
-// ...
+Serial message delivery is handled on a secondary thread, with the `bufferData` method providing a threadsafe interface to update the data sent to the DMX controller. Querying the DMX hardware’s basic parameters is also supported (though responses from the device occasionally stall). We can attempt to set the hardware’s parameters, but sending a message matching the device documentation doesn’t appear to work. We may try adjusting that message in the future.
 
-void BasicSampleApp::setup()
-{
-	// list all the available serial devices
-	// DMX Pro is usually something like "tty.usbserial-EN.."
-	DMXPro::listDevices();
+If you are curious about what is leaving the DMX serial box, read up a bit on [DMX](https://en.wikipedia.org/wiki/DMX512). Make sure that your installation is using proper cabling and a terminator at the final device.
 
-	// create a device passing the device name or a partial device name
-	// useful if you want to swap device without changing the name
-    mDmxController  = DMXPro::create( "tty.usbserial-EN" );
+### KiNet v2
 
-	if ( mDmxController->isConnected() )
-		console() << "DMX device connected" << endl;
-}
+The KiNet v2 protocol is essentially a DMX array underneath an internet protocol and a Philips-specific header containing KiNet port and version information. It is used in conjunction with their newer lightning control hardware.
 
-void BasicSampleApp::update()
-{
-	int dmxChannel	= 2;
-	int dmxValue 	= 255;
+Power supply models we have used that accept KiNet v2 :
 
-	if ( mDmxController && mDmxController->isConnected() )
-    {
-    	// send value 255 to channel 2
-        mDmxController->setValue( dmxValue, dmxChannel );
-    }
-}
+[sPDS-480](https://www.colorkinetics.com/support/datasheets/sPDS-480ca_ProductGuide.pdf)
 
-```
+[sPDS-60ca](https://www.colorkinetics.com/support/datasheets/sPDS60ca_24v_ProductGuide.pdf)
 
---
+### KiNet v1
+The KiNet v1 protocol is the same as KiNet v2 with a slightly different header. This Philips protocol to communicate to older power supplies.
 
-### License
-The MIT License (MIT)
+Power supply models we have used that accept KiNet v1 :
 
-Copyright (c) 2014 Nocte Studio Ltd. - [www.nocte.co.uk](http://www.nocte.co.uk)
+[PDS-70mr 24V power supply](https://www.colorkinetics.com/ls/pds/pds70mr/)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+### Streaming ACN
+sACN (architecture for control networks) is a standard for controlling entertainment equipment, such as lighting, over an IP protocol. It is essentially a DMX frame wrapped in an ACN-specific header. There is a wealth of documentation of sACN. To learn more about it, visit [this page](https://www.rdmprotocol.org/files/What_Comes_After_Streaming_DMX_over_ACN_%20(4).pdf).
