@@ -73,6 +73,11 @@ void DMXPro::shutdown(bool send_zeros)
 		
 		ci::sleep( mSenderThreadSleepFor * 2 );
         
+        mRunDataThread = false;
+        
+        if ( mDataThread.joinable() )
+            mDataThread.join();
+
         mSerial->flush();
         mSerial = nullptr;
         
@@ -177,7 +182,9 @@ void DMXPro::processDMXData()
         while( mSerial && mRunDataThread )
         {
             // wait for start message and label
-		    while ( value != DMXPRO_START_MSG && mSerial->getNumBytesAvailable() > 0 )
+		    
+            /*
+            while ( value != DMXPRO_START_MSG && mSerial->getNumBytesAvailable() > 0 )
 		    {
 			    value = mSerial->readByte();
 		    }
@@ -187,8 +194,24 @@ void DMXPro::processDMXData()
                 value = '*';
                 continue;
             }
+            */
+            
+            while ( value != DMXPRO_RECEIVE_PACKET_LABEL )
+            {
+                while ( value != DMXPRO_START_MSG )
+                {
+                    if ( mSerial->getNumBytesAvailable() > 0  )
+                        value = mSerial->readByte();
+                }
+                
+                if ( mSerial->getNumBytesAvailable() > 0  )
+                    value = mSerial->readByte();
+            }            
             
             // read header
+            if ( mSerial->getNumBytesAvailable() < 2 )
+                continue;
+            
             packetDataSize = mSerial->readByte();                       // LSB
             packetDataSize += ( (uint32_t)mSerial->readByte() ) << 8;   // MSB
 
