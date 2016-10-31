@@ -102,13 +102,13 @@ private:
 
 private:
     
-    unsigned char   mDMXDataIn[512];        // Incoming data parsed by the thread
-    unsigned char	*mDMXPacketIn;			// Incoming DMX packet, it contains bytes
-    unsigned char	*mDMXPacketOut;			// Outgoing DMX packet, it contains bytes
-    ci::SerialRef	mSerial;                // serial interface
-    int				mSenderThreadSleepFor;  // sleep for N ms, this is based on the FRAME_RATE
-	std::mutex      mDMXDataMutex;			// mutex unique lock
-	std::string		mSerialDeviceName;		// usb serial device name
+    unsigned char   mDMXDataIn[512];                        // Incoming data parsed by the thread
+    unsigned char	mDMXPacketIn[DMXPRO_PACKET_SIZE];		// Incoming DMX packet, it contains bytes
+    unsigned char	mDMXPacketOut[DMXPRO_PACKET_SIZE];		// Outgoing DMX packet, it contains bytes
+    ci::SerialRef	mSerial;                                // serial interface
+    int				mSenderThreadSleepFor;                  // sleep for N ms, this is based on the FRAME_RATE
+	std::mutex      mDMXDataMutex;                          // mutex unique lock
+	std::string		mSerialDeviceName;                      // usb serial device name
     std::thread     mDataThread;
     bool            mRunDataThread;
     DeviceMode      mDeviceMode;

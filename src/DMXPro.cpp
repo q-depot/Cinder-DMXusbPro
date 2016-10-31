@@ -22,8 +22,6 @@ using namespace std;
 DMXPro::DMXPro( const string &deviceName, DeviceMode mode ) : mSerialDeviceName(deviceName)
 {
     mDeviceMode             = mode;
-    mDMXPacketIn            = nullptr;
-    mDMXPacketOut           = nullptr;
     mSerial                 = nullptr;
 	mSenderThreadSleepFor   = 1000 / DMXPRO_FRAME_RATE;
     
@@ -36,36 +34,13 @@ DMXPro::DMXPro( const string &deviceName, DeviceMode mode ) : mSerialDeviceName(
 DMXPro::~DMXPro()
 {
     shutdown(true);
-    
-    mRunDataThread = false;
-    if ( mDataThread.joinable() )
-        mDataThread.join();
-    
-    /*
-    setZeros();
-    
-    ci::sleep(50);	
-    
-    mRunDataThread = false;
-    if ( mDataThread.joinable() )
-        mDataThread.join();
-    
-    if ( mSerial )
-    {
-        mSerial->flush();
-        mSerial = nullptr;
-    }
-    */
-    
-    delete []mDMXPacketIn;
-    delete []mDMXPacketOut;
-    
-    console() << "shutdown DMXPro" << endl;
 }
 
 
 void DMXPro::shutdown(bool send_zeros)
 {
+    console() << "DMXPro shutting down.." << endl;
+
 	if ( mSerial )
 	{
 		if (send_zeros)
@@ -74,15 +49,22 @@ void DMXPro::shutdown(bool send_zeros)
 		ci::sleep( mSenderThreadSleepFor * 2 );
         
         mRunDataThread = false;
-        
-        if ( mDataThread.joinable() )
-            mDataThread.join();
 
+        if ( mDataThread.joinable() )
+        {
+            console() << "thread is joinable" << endl;
+            mDataThread.join();
+        }
+        else
+            console() << "cannot join thread!" << endl;
+        
         mSerial->flush();
         mSerial = nullptr;
-        
-		ci::sleep(50);	
 	}
+    else
+    {
+        mDataThread.detach();
+    }
     
     console() << "DMXPro > shutdown!" << endl;
 }
@@ -123,18 +105,13 @@ void DMXPro::initSerial(bool initWithZeros)
 	catch( ... ) 
     {
         console() << "DMXPro > There was an error initializing the usb DMX device" << endl;
-		mSerial = NULL;
+		mSerial = nullptr;
 	}
 }
 
 
 void DMXPro::initDMX()
 {
-    // Outgoing DMX packet
-	delete []mDMXPacketOut;
-	mDMXPacketOut	= nullptr;
-	mDMXPacketOut	= new unsigned char[DMXPRO_PACKET_SIZE];
-    
     // LAST 4 dmx channels seem not to be working, 508-511 !!!
     
     for (int i=0; i < DMXPRO_PACKET_SIZE; i++)                      // initialize all channels with zeros, data starts from [5]
@@ -147,12 +124,7 @@ void DMXPro::initDMX()
 	mDMXPacketOut[4] = 0;                                           // DMX start code
 	mDMXPacketOut[DMXPRO_PACKET_SIZE-1] = DMXPRO_END_MSG;           // DMX start delimiter 0xE7
     
-    // Incoming DMX packet
-    delete []mDMXPacketIn;
-    mDMXPacketIn	= nullptr;
-    mDMXPacketIn	= new unsigned char[DMXPRO_PACKET_SIZE];
-
-    // init DMX data
+    // init incoming DMX data
     for( size_t k=0; k < 512; k++ )
         mDMXDataIn[k] = 0;
 }
@@ -160,6 +132,8 @@ void DMXPro::initDMX()
 
 void DMXPro::processDMXData()
 {
+    console() << "DMXPro::processDMXData() start thread" << endl;
+    
     mRunDataThread = true;
     
     if ( mDeviceMode == DeviceMode::SENDER )
@@ -196,9 +170,9 @@ void DMXPro::processDMXData()
             }
             */
             
-            while ( value != DMXPRO_RECEIVE_PACKET_LABEL )
+            while ( mRunDataThread && value != DMXPRO_RECEIVE_PACKET_LABEL )
             {
-                while ( value != DMXPRO_START_MSG )
+                while ( mRunDataThread && value != DMXPRO_START_MSG )
                 {
                     if ( mSerial->getNumBytesAvailable() > 0  )
                         value = mSerial->readByte();
@@ -244,6 +218,8 @@ void DMXPro::processDMXData()
             std::this_thread::sleep_for( std::chrono::milliseconds( 16 ) );
         }
     }
+    
+    mRunDataThread = false;
     
     console() << "DMXPro > sendDMXData() thread exited!" << endl;
 }
