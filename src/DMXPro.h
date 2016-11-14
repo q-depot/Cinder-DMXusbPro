@@ -72,7 +72,7 @@ public:
 		const std::vector<ci::Serial::Device> &devices( ci::Serial::getDevices(true) );
 		
         for( std::vector<ci::Serial::Device>::const_iterator deviceIt = devices.begin(); deviceIt != devices.end(); ++deviceIt )
-            devicesList.push_back( deviceIt->getPath() );
+            devicesList.push_back( deviceIt->getName() );
         
         return devicesList;
 	}

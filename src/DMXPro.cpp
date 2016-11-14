@@ -99,6 +99,13 @@ void DMXPro::initSerial(bool initWithZeros)
 	try 
     {
         Serial::Device dev = Serial::findDeviceByNameContains(mSerialDeviceName);
+        
+        if ( dev.getName() == "" )
+        {
+            console() << "DMXPro > cannot open device, device not found! > " << mSerialDeviceName << endl;
+            return;
+        }
+
         mSerial = Serial::create( dev, DMXPRO_BAUD_RATE );
         console() << "DMXPro > Connected to usb DMX interface: " << dev.getName() << endl;
 	}
