@@ -16,7 +16,8 @@
 
 #include "cinder/Thread.h"
 #include "cinder/Serial.h"
-
+#include "cinder/app/App.h"
+#include "cinder/gl/gl.h"
 
 #define DMXPRO_START_MSG		        0x7E		// Start of message delimiter
 #define DMXPRO_END_MSG			        0xE7		// End of message delimiter
